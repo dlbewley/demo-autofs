@@ -20,7 +20,9 @@ This appears to be adequately configured so far.
 
 [NFS Server](nfs/base/kustomization.yaml)
 
-This is in progress.
+The exports are in a config map comprised of [these files](ldap/base/scripts/) which is mounted at `/opt/exports.d` and copied to `/etc/exports.d/` so as not to conflict with install of nfs-utils.
+
+Users are created in [the cloud-init](nfs/base/scripts/userData) with the same UID/GID as was [defined in LDAP](ldap/base/scripts/users.ldif).
 
 ## NFS Client
 

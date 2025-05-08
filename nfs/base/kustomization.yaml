@@ -1,0 +1,105 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-nfs
+
+labels:
+  - includeSelectors: true
+    pairs:
+      demo: client
+
+components:
+  - ../../components/vms/nfs
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: exports
+    files:
+      - scripts/home.exports
+
+#   - name: sssd-conf
+#     files:
+#       - scripts/sssd.conf
+
+secretGenerator:
+  - name: cloudinitdisk-client
+    files:
+      - scripts/userData
+
+resources:
+  - namespace.yaml
+
+patches:
+
+  - target:
+      group: kubevirt.io
+      kind: VirtualMachine
+      name: .*
+      version: v1
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/domain/devices/interfaces/0
+        value: {
+          "name": "nic-1924",
+          "bridge": {},
+          "model": "virtio"
+        }
+      - op: replace
+        path: /spec/template/spec/networks/0
+        value: {
+          "name": "nic-1924",
+          "multus": {
+            "networkName": "default/vlan-1924"
+          }
+        }
+
+      - op: replace
+        path: /spec/RunStrategy
+        value: Always
+      # add volumes for secret and configmap
+      - op: replace
+        path: /spec/template/spec/volumes/1/cloudInitNoCloud
+        value: {
+          "secretRef": {
+            "name": "cloudinitdisk-client"
+          }
+        }
+
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value: {
+          "name": "exports",
+          "configMap": {
+            "name": "exports"
+          }
+        }
+      - op: add
+        path: /spec/template/spec/domain/devices/disks/-
+        value: {
+          "name": "exports",
+          "serial": "exports",
+          "disk": {
+            "bus": "virtio"
+          }
+        }
+
+      # - op: add
+      #   path: /spec/template/spec/volumes/-
+      #   value: {
+      #     "name": "sssd-conf",
+      #     "configMap": {
+      #       "name": "sssd-conf"
+      #     }
+      #   }
+      # - op: add
+      #   path: /spec/template/spec/domain/devices/disks/-
+      #   value: {
+      #     "name": "sssd-conf",
+      #     "serial": "sssd-conf",
+      #     "disk": {
+      #       "bus": "virtio"
+      #     }
+      #   }
