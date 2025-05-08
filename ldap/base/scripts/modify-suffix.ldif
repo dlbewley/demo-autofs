@@ -1,0 +1,13 @@
+# find the olcDatabase dn:
+#    [root@ldap ~]#  ldapsearch -Y EXTERNAL -H ldapi:/// -b "cn=config" "(olcSuffix=*)" olcSuffix olcDatabase
+#    # {2}mdb, config
+#    dn: olcDatabase={2}mdb,cn=config
+#    olcDatabase: {2}mdb
+#    olcSuffix: dc=my-domain,dc=com
+# Place that in the dn below
+#
+# modify-suffix.ldif
+dn: olcDatabase={2}mdb,cn=config
+changeType: modify
+replace: olcSuffix
+olcSuffix: dc=lab,dc=bewley,dc=net

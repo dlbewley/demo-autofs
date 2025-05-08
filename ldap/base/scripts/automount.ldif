@@ -1,0 +1,37 @@
+# create automount ou
+dn: ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: organizationalUnit
+ou: automount
+description: Container for automount maps
+
+# create automount map entries
+dn: ou=auto.master,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: automountMap
+ou: auto.master
+
+dn: cn=/home,ou=auto.master,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: automount
+cn: /home
+automountInformation: ldap:ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
+
+dn: ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: automountMap
+ou: auto.home
+
+dn: cn=dale,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: automount
+cn: dale
+automountInformation: -fstype=nfs4 server:/export/home/dale
+
+dn: cn=jill,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: automount
+cn: jill
+automountInformation: -fstype=nfs4 server:/export/home/jill
+
+dn: cn=remy,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: automount
+cn: remy
+automountInformation: -fstype=nfs4 server:/export/home/remy

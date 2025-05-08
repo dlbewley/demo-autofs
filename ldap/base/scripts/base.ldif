@@ -1,0 +1,19 @@
+# ldapsearch -Y EXTERNAL -H ldapi:/// -b "cn=config" "(olcSuffix=*)" olcSuffix olcDatabase
+
+dn: dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+description: Dale Bewley Home Lab
+dc: lab
+o: Bewley Labs
+
+dn: ou=People,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Group,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: organizationalUnit
+ou: Group

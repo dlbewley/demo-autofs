@@ -1,0 +1,78 @@
+# users.ldif
+dn: uid=dale,ou=People,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: dale
+cn: Dale
+sn: Bewley
+givenName: Dale
+displayName: Dale Bewley
+uidNumber: 1001
+gidNumber: 1001
+homeDirectory: /export/home/dale
+loginShell: /bin/bash
+# Set password using ldappasswd later or use a hashed password here
+userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
+
+dn: cn=dale,ou=Group,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: posixGroup
+cn: dale
+gidNumber: 1001
+memberUid: dale
+
+# Jill
+dn: uid=jill,ou=People,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: jill
+cn: Jill
+sn: Bewley
+givenName: Jill
+displayName: Jill Bewley
+uidNumber: 1002
+gidNumber: 1002
+homeDirectory: /export/home/jill
+loginShell: /bin/bash
+userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
+
+dn: cn=jill,ou=Group,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: posixGroup
+cn: jill
+gidNumber: 1002
+memberUid: jill
+
+# Remy
+dn: uid=remy,ou=People,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: remy
+cn: Remy
+sn: Bewley
+givenName: Remy
+displayName: Remy Bewley
+uidNumber: 1003
+gidNumber: 1003
+homeDirectory: /export/home/remy
+loginShell: /bin/bash
+userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
+
+dn: cn=remy,ou=Group,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: posixGroup
+cn: remy
+gidNumber: 1003
+memberUid: remy

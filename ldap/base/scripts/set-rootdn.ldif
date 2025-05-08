@@ -1,0 +1,12 @@
+# set-rootdn.ldif
+# ldapsearch -Y EXTERNAL -H ldapi:/// -b "olcDatabase={2}mdb,cn=config" "(objectClass=olcMdbConfig)" olcRootDN olcRootPW olcSuffix
+dn: olcDatabase={2}mdb,cn=config
+changeType: modify
+replace: olcRootDN
+olcRootDN: cn=admin,dc=lab,dc=bewley,dc=net
+-
+# If olcRootDN already exists and you want to change it:
+replace: olcRootPW
+# slappasswd -s ldap
+olcRootPW: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
+# ldapmodify -Y EXTERNAL -H ldapi:/// -f set-rootdn.ldif
