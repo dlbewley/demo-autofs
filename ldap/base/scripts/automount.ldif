@@ -24,14 +24,14 @@ ou: auto.home
 dn: cn=dale,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: automount
 cn: dale
-automountInformation: -fstype=nfs4 server:/export/home/dale
+automountInformation: -fstype=nfs4 nfs:/export/home/dale
 
 dn: cn=jill,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: automount
 cn: jill
-automountInformation: -fstype=nfs4 server:/export/home/jill
+automountInformation: -fstype=nfs4 nfs:/export/home/jill
 
 dn: cn=remy,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: automount
 cn: remy
-automountInformation: -fstype=nfs4 server:/export/home/remy
+automountInformation: -fstype=nfs4 nfs:/export/home/remy
