@@ -1,4 +1,31 @@
 # users.ldif
+# create a cloud-user home export just for testing
+dn: uid=cloud-user,ou=People,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: cloud-user
+cn: Cloud
+sn: User
+givenName: Cloud
+displayName: Cloud User
+uidNumber: 1000
+gidNumber: 1000
+homeDirectory: /home/cloud-user
+loginShell: /bin/bash
+# Set password using ldappasswd later or use a hashed password here
+userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
+
+dn: cn=cloud-user,ou=Group,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: posixGroup
+cn: cloud-user
+gidNumber: 1000
+memberUid: cloud-user
+
 dn: uid=dale,ou=People,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: person
@@ -13,7 +40,7 @@ givenName: Dale
 displayName: Dale Bewley
 uidNumber: 1001
 gidNumber: 1001
-homeDirectory: /export/home/dale
+homeDirectory: /home/dale
 loginShell: /bin/bash
 # Set password using ldappasswd later or use a hashed password here
 userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
@@ -40,7 +67,7 @@ givenName: Jill
 displayName: Jill Bewley
 uidNumber: 1002
 gidNumber: 1002
-homeDirectory: /export/home/jill
+homeDirectory: /home/jill
 loginShell: /bin/bash
 userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
 
@@ -66,7 +93,7 @@ givenName: Remy
 displayName: Remy Bewley
 uidNumber: 1003
 gidNumber: 1003
-homeDirectory: /export/home/remy
+homeDirectory: /home/remy
 loginShell: /bin/bash
 userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
 
