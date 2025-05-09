@@ -6,6 +6,7 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcYGv4QhrNhDB9ahXEp2x6kn9YZ2RV5GEXcRRYvk4yLpFidvSFJxkE3AonLuOgi7WBVwMofCCWbHDEgBIWNv6RzR41gKQYI+ZgcT5bSZ9ZFhkkgBvTE66q0XyFXYeON+QV1Woxb7FDDmkvpMi9Sp32EMLOaSQwgnWCsI00zmUgM4UYy66UatWqSRaPtLe8ES2IqA/WUcRfxexcFjtS6jsn2R3Xyz+w9IpexWMhTjWmKpH97Ps8Sj61pCgGgMkkvuBDWBhnVy58Hf0tNg2YZnILCUdh0vVZ1LWPpsno2HB+gBzNhJZznSC5x+emUKtpQwOzrdFn51h1ZCEQDAmyZ+Vb acm@bunny
+    homedir: /local/home/cloud-user
 
 rh_subscription:
   org: 00000000
@@ -16,11 +17,19 @@ rh_subscription:
 
 packages:
   - autofs
+  - nfs-utils
   - openldap-clients
   - sssd
+  - sssd-ldap
 
 mounts:
   - [ /dev/disk/by-id/virtio-sssd-conf, /opt, iso9660, 'defaults' ]
+
+#[root@client log]# grep -E '^(passwd|shadow|group|automount)' /etc/nsswitch.conf
+#passwd:     sss files systemd
+#shadow:     files
+#group:      sss files systemd
+#automount:  files sss
 
 runcmd:
   - [cp, /opt/sssd.conf, /etc/sssd/sssd.conf]
@@ -32,3 +41,6 @@ runcmd:
   - [systemctl, start, autofs.service]
   # check automounts
   - [automount -m]
+  # show nsswitch configs
+  - [grep, -E, '^(passwd|shadow|group|automount)', /etc/nsswitch.conf]
+  - [getent, passwd, dale]
