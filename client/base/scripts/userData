@@ -1,12 +1,14 @@
 #cloud-config
 users:
   - name: cloud-user
-    lock_passwd: true
     groups: wheel
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcYGv4QhrNhDB9ahXEp2x6kn9YZ2RV5GEXcRRYvk4yLpFidvSFJxkE3AonLuOgi7WBVwMofCCWbHDEgBIWNv6RzR41gKQYI+ZgcT5bSZ9ZFhkkgBvTE66q0XyFXYeON+QV1Woxb7FDDmkvpMi9Sp32EMLOaSQwgnWCsI00zmUgM4UYy66UatWqSRaPtLe8ES2IqA/WUcRfxexcFjtS6jsn2R3Xyz+w9IpexWMhTjWmKpH97Ps8Sj61pCgGgMkkvuBDWBhnVy58Hf0tNg2YZnILCUdh0vVZ1LWPpsno2HB+gBzNhJZznSC5x+emUKtpQwOzrdFn51h1ZCEQDAmyZ+Vb acm@bunny
     homedir: /local/home/cloud-user
+    lock_passwd: false
+    # local
+    passwd: $y$j9T$hpEP7mxg5d5Ys3R3CqB8R.$qvhmcXLcqmqwXA6GV0MnVHyuHf1VMVDulNSFOF76Ge3
 
 rh_subscription:
   org: 00000000
@@ -25,6 +27,7 @@ packages:
 mounts:
   - [ /dev/disk/by-id/virtio-sssd-conf, /opt, iso9660, 'defaults' ]
 
+# tested values
 #[root@client log]# grep -E '^(passwd|shadow|group|automount)' /etc/nsswitch.conf
 #passwd:     sss files systemd
 #shadow:     files
@@ -32,6 +35,7 @@ mounts:
 #automount:  files sss
 
 runcmd:
+  # copy sssd config from configmap
   - [cp, /opt/sssd.conf, /etc/sssd/sssd.conf]
   - [chmod, 600, /etc/sssd/sssd.conf]
   - [systemctl, daemon-reload]
@@ -40,7 +44,13 @@ runcmd:
   - [systemctl, enable, autofs.service]
   - [systemctl, start, autofs.service]
   # check automounts
-  - [automount -m]
-  # show nsswitch configs
+  - [automount, -m]
+  # echo nsswitch configs
   - [grep, -E, '^(passwd|shadow|group|automount)', /etc/nsswitch.conf]
+  # confirm sssd lookup from ldap
   - [getent, passwd, dale]
+  # fix up ssh for the local cloud-user and automount users
+  - [semanage, fcontext, -a, -t, home_root_t, "/local/home/[^/]+"]
+  - [semanage, fcontext, -a, -t, ssh_home_t, "/local/home/[^/]+/.ssh(/.*)?"]
+  - [setsebool, -P, use_nfs_home_dirs, true]
+  - [restorecon, -Rv, /local/home]
