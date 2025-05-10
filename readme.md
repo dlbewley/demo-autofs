@@ -7,6 +7,9 @@ This demo sets up 3 VMs on OpenShift Virtualization.
 * NFS Server
 * NFS Client
 
+> [!IMPORTANT]
+> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying.
+
 ## LDAP Server
 
 [LDAP server](ldap/base/kustomization.yaml) is RHEL9 with OpenLDAP. Since Red Hat [dropped](https://access.redhat.com/solutions/3816971) the openldap-servers package as of RHEL8 it comes from elsewhere.
@@ -26,8 +29,9 @@ Users are created in [the cloud-init](nfs/base/scripts/userData) with the same U
 
 ## NFS Client
 
-[Client Server](client/base/kustomization.yaml)
-This is in progress.
+[NFS Client](client/base/kustomization.yaml) configures sssd and autofs using configmaps [from here](client/base/scripts/).
+
+User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from ldap will automount at `/home/<user>`.
 
 ## See Also
 
