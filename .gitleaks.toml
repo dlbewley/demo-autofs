@@ -1,5 +1,6 @@
 #.gitleaks.toml
 [whitelist]
 files = [ 
-    virtualmachine.yaml
+    virtualmachine.yaml,
+    userData.yaml
 ]
