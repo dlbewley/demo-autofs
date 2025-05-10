@@ -14,7 +14,7 @@ givenName: Cloud
 displayName: Cloud User
 uidNumber: 1000
 gidNumber: 1000
-homeDirectory: /home/cloud-user
+homeDirectory: /local/home/cloud-user
 loginShell: /bin/bash
 # Set password using ldappasswd later or use a hashed password here
 userPassword: {SSHA}VxqKHxPZyPdBEDowvgqfoFTMESFwCbHn
