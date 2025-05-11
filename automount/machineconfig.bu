@@ -1,0 +1,22 @@
+---
+variant: openshift
+version: 4.18.0
+metadata:
+  name: 99-worker-sssd-config
+  labels:
+    machineconfiguration.openshift.io/role: worker
+systemd:
+  # this is already enabled but is conditioned on the presence of the sssd.conf file
+  units:
+    - name: sssd.service
+      enabled: true
+storage:
+  # this does not exist by default
+  files:
+    - path: /etc/sssd.conf
+      contents:
+        # butane -d scripts < machineconfig.bu > machineconfig.yaml
+        local: sssd.conf
+      user:
+        name: root
+      mode: 0600
