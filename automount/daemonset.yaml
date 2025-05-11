@@ -11,11 +11,13 @@ spec:
       labels:
         app: automount
     spec:
+      # only run on test nodes
       nodeSelector:
         demo: automount
       containers:
       - name: automount
-        image: quay.io/noseka1/openshift-toolbox:basic
+        # image: quay.io/dbewley/autofs/nfs-utils:ldap
+        image: quay.io/dbewley/autofs:v4.18
         imagePullPolicy: Always
         command:
           - /bin/sh
@@ -29,6 +31,8 @@ spec:
           mountPath: /toolbox
         - name: conf
           mountPath: /etc/auto.master.d/extra.autofs
+          # subPath mounts only the specified file/directory from the volume instead of the entire volume
+          # In this case, only the extra.autofs file from the conf ConfigMap is mounted at /etc/auto.master.d/extra.autofs
           subPath: extra.autofs
         - name: conf
           mountPath: /etc/extra.nfs
@@ -42,9 +46,6 @@ spec:
       hostPID: true
       # Need to reach rpcbind on 127.0.0.1:111
       hostNetwork: true
-      # Run on Linux nodes only
-      nodeSelector:
-        kubernetes.io/os: linux
       volumes:
       - name: run
         configMap:
@@ -55,3 +56,7 @@ spec:
       - name: host
         hostPath:
           path: /var/mnt
+      # nsswitch.conf already looks ok. must we mount it though?
+      - name: sss
+        hostPath:
+          path: /var/lib/sss

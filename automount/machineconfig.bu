@@ -13,7 +13,7 @@ systemd:
 storage:
   # this does not exist by default
   files:
-    - path: /etc/sssd.conf
+    - path: /etc/sssd/sssd.conf
       contents:
         # butane -d scripts < machineconfig.bu > machineconfig.yaml
         local: sssd.conf
