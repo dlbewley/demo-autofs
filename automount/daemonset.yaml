@@ -18,17 +18,9 @@ spec:
       - name: automount
         image: quay.io/dbewley/autofs:v4.18
         imagePullPolicy: Always
-        command:
-          - /bin/sh
-        args:
-          - -x
-          - /toolbox/run.sh
         securityContext:
           privileged: true
         volumeMounts:
-          - name: run
-            mountPath: /toolbox
-
           - name: conf
             mountPath: /etc/auto.master.d/extra.autofs
             subPath: extra.autofs
@@ -36,6 +28,7 @@ spec:
           - name: conf
             mountPath: /etc/extra.nfs
             subPath: extra.nfs
+          # temporary
           - name: host
             mountPath: /mnt
             # Bidirectional mount propagation is required
@@ -46,9 +39,6 @@ spec:
       # Need to reach rpcbind on 127.0.0.1:111
       hostNetwork: true
       volumes:
-        - name: run
-          configMap:
-            name: automount-run
         - name: conf
           configMap:
             name: automount-conf

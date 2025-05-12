@@ -7,12 +7,12 @@ LABEL maintainer="dbewley@redhat.com"
 LABEL instructions="Build on a RHEL 9 node to enable Red Hat dnf repo access"
 LABEL source="https://github.com/dbewley/demo-autofs"
 LABEL repo="https://quay.io/repository/dbewley/autofs"
+
 # These RPMs are already installed on a OCP 4.18 node:
 #   - nfs-utils-2.5.4-26.el9_4.1.x86_64
 #   - openldap-2.6.6-3.el9.x86_64
 #   - sssd-2.9.4-6.el9_4.3.x86_64
 #   - sssd-ldap-2.9.4-6.el9_4.3.x86_64
-
 RUN dnf install \
         --disablerepo=* \
         --enablerepo=rhel-9-for-x86_64-baseos-rpms \
@@ -21,4 +21,5 @@ RUN dnf install \
         openldap-clients \
         && dnf clean all
 
-CMD ["sleep", "1d"]
+ENTRYPOINT [ "automount" ]
+CMD [ "--force", "--foreground", "--timeout", "0", "--dont-check-daemon", "--debug" ]

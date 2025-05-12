@@ -118,6 +118,7 @@ Deploy the [automount daemonset](daemonset.yaml) with a Node Selector (`demo: au
 `oc label node worker-5 demo=automount`
 
 
-# Watch out fors
+# Potential Pitfalls?
 
 * /home is a symlink to /var/home
+* kerberos needed?

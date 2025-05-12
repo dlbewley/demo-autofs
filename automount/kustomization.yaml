@@ -9,22 +9,25 @@ images:
     newTag: v4.18
 
 configMapGenerator:
-  - name: automount-run
-    files:
-      - run.sh
+  # - name: automount-run
+  #   files:
+  #     - run.sh
 
   - name: automount-conf
     files:
       - scripts/extra.autofs
       - scripts/extra.nfs
 
+   # configmap is only created for reference not used
+   # it is applied via MCO directly
+   # probably to be removed in a future release
   - name: sssd-conf
     files:
       - scripts/sssd.conf
 
 resources:
   - namespace.yaml
-  - daemonset.yaml
   - serviceaccount.yaml
   - role.yaml
   - rolebinding.yaml
+  - daemonset.yaml
