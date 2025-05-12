@@ -13,12 +13,15 @@ LABEL repo="https://quay.io/repository/dbewley/autofs"
 #   - openldap-2.6.6-3.el9.x86_64
 #   - sssd-2.9.4-6.el9_4.3.x86_64
 #   - sssd-ldap-2.9.4-6.el9_4.3.x86_64
+#   - sssd-client-2.9.4-6.el9_4.3.x86_64
+
 RUN dnf install \
         --disablerepo=* \
         --enablerepo=rhel-9-for-x86_64-baseos-rpms \
         -y \
         autofs \
         openldap-clients \
+        sssd-client \
         strace \
         && dnf clean all
 
