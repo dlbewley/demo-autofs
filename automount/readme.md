@@ -117,6 +117,32 @@ Deploy the [automount daemonset](daemonset.yaml) with a Node Selector (`demo: au
 
 `oc label node worker-5 demo=automount`
 
+# Testing
+
+Work towards automounting of home dirs.
+
+## Host Plan
+
+**Test 1 - getent passwd via LDAP**
+
+* ✅ `getent passwd dale` 
+
+## Automount Pod Plan 
+
+**Test 1 - getent passwd via LDAP**
+
+* ❌ `getent passwd dale` 
+
+**Test 2 - automount /home/dale in automount pod**
+
+* [ ]: `ls /home/dale`
+
+**Test 3 - view /home/dale mount in host os**
+
+**Test 4 - view /home/dale mount in user workload pod**
+
+**Test 5 - access /home/dale mount in user workload pod as UID 1001 GID 1001**
+
 
 # Potential Pitfalls?
 
