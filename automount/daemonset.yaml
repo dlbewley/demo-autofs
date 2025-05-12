@@ -16,7 +16,6 @@ spec:
         demo: automount
       containers:
       - name: automount
-        # image: quay.io/dbewley/autofs/nfs-utils:ldap
         image: quay.io/dbewley/autofs:v4.18
         imagePullPolicy: Always
         command:
@@ -27,36 +26,36 @@ spec:
         securityContext:
           privileged: true
         volumeMounts:
-        - name: run
-          mountPath: /toolbox
-        - name: conf
-          mountPath: /etc/auto.master.d/extra.autofs
-          # subPath mounts only the specified file/directory from the volume instead of the entire volume
-          # In this case, only the extra.autofs file from the conf ConfigMap is mounted at /etc/auto.master.d/extra.autofs
-          subPath: extra.autofs
-        - name: conf
-          mountPath: /etc/extra.nfs
-          subPath: extra.nfs
-        - name: host
-          mountPath: /mnt
-          # Bidirectional mount propagation is required
-          mountPropagation: Bidirectional
+          - name: run
+            mountPath: /toolbox
+
+          - name: conf
+            mountPath: /etc/auto.master.d/extra.autofs
+            subPath: extra.autofs
+
+          - name: conf
+            mountPath: /etc/extra.nfs
+            subPath: extra.nfs
+          - name: host
+            mountPath: /mnt
+            # Bidirectional mount propagation is required
+            mountPropagation: Bidirectional
       serviceAccountName: automount
       # For automount to work hostPID=true is required
       hostPID: true
       # Need to reach rpcbind on 127.0.0.1:111
       hostNetwork: true
       volumes:
-      - name: run
-        configMap:
-          name: automount-run
-      - name: conf
-        configMap:
-          name: automount-conf
-      - name: host
-        hostPath:
-          path: /var/mnt
-      # nsswitch.conf already looks ok. must we mount it though?
-      - name: sss
-        hostPath:
-          path: /var/lib/sss
+        - name: run
+          configMap:
+            name: automount-run
+        - name: conf
+          configMap:
+            name: automount-conf
+        - name: host
+          hostPath:
+            path: /var/mnt
+        # nsswitch.conf already looks ok. must we mount it though?
+        - name: sss
+          hostPath:
+            path: /var/lib/sss
