@@ -4,27 +4,26 @@ kind: Kustomization
 namespace: automount-nfs-poc
 
 images:
-  - name: quay.io/noseka1/openshift-toolbox
-    # newName: quay.io/noseka1/toolbox-container
-    # newTag: basic
-    newName: quay.io/dbewley/nfs-utils
-    newTag: ldap
+  - name: quay.io/dbewley/autofs
+    newName: quay.io/dbewley/autofs
+    newTag: v4.18
 
 configMapGenerator:
-- name: automount-run
-  files:
-  - run.sh
-- name: automount-conf
-  files:
-  - scripts/extra.autofs
-  - scripts/extra.nfs
-configMapGenerator:
+  - name: automount-run
+    files:
+      - run.sh
+
+  - name: automount-conf
+    files:
+      - scripts/extra.autofs
+      - scripts/extra.nfs
+
   - name: sssd-conf
     files:
       - scripts/sssd.conf
 
 resources:
-- automount-ds.yaml
-- automount-sa.yaml
-- automount-scc-rolebinding.yaml
-- automount-scc-role.yaml
+  - automount-ds.yaml
+  - automount-sa.yaml
+  - automount-scc-rolebinding.yaml
+  - automount-scc-role.yaml

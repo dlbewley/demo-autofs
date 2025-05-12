@@ -1,4 +1,4 @@
-Configure OpenShift node to use automount.
+# Configure an OpenShift node to use automount
 
 MachineConfig sets up sssd with LDAP knowledge.
 
@@ -6,14 +6,15 @@ Daemonset with a Node Selector (`demo: automount`) runs automount:
 
 `oc label node worker-5 demo=automount`
 
-These RPMs are already installed on a OCP 4.18 node:
+> [!NOTE] 
+> These RPMs are already installed on a OCP 4.18 node:
+>
+> - nfs-utils-2.5.4-26.el9_4.1.x86_64
+> - openldap-2.6.6-3.el9.x86_64
+> - sssd-2.9.4-6.el9_4.3.x86_64
+> - sssd-ldap-2.9.4-6.el9_4.3.x86_64
 
-- nfs-utils-2.5.4-26.el9_4.1.x86_64
-- openldap-2.6.6-3.el9.x86_64
-- sssd-2.9.4-6.el9_4.3.x86_64
-- sssd-ldap-2.9.4-6.el9_4.3.x86_64
-
-Missing is:
+RPMs needed:
 
 - autofs
 - openldap-clients
@@ -105,3 +106,7 @@ group:      files sss systemd altfiles
 automount:  sss files
 shadow:     files
 ```
+
+# Watch out fors
+
+* /home is a symlink to /var/home
