@@ -2,65 +2,22 @@
 
 MachineConfig sets up sssd with LDAP knowledge and a daemonset runs automountd on the selected nodes.
 
+## Configure and Enable sssd on OpenShift Nodes Using MCO
 
-# Autofs Image Building
-
-> [!NOTE] 
-> These RPMs are already installed on a OCP 4.18 node:
->
-> - nfs-utils-2.5.4-26.el9_4.1.x86_64
-> - openldap-2.6.6-3.el9.x86_64
-> - sssd-2.9.4-6.el9_4.3.x86_64
-> - sssd-ldap-2.9.4-6.el9_4.3.x86_64
-
-RPMs needed:
-
-- autofs
-- openldap-clients
-
-
-Copy $PULL_SECRET to ~/.config/containers/auth.json
-
-Non root build fails with glibc.so.6 (rhel9)
-
-```bash
-$ podman build -t quay.io/dbewley/autofs/automount:v4.18 .
-...
-STEP 8/9: RUN dnf install         --disablerepo=*         --enablerepo=rhel-9-for-x86_64-baseos-rpms         -y         autofs         openldap-clients         && dnf clean all                                                   /bin/sh: error while loading shared libraries: /lib64/libc.so.6: cannot apply additional memory protection after relocation: Permission denied                                                                                     Error: building at STEP "RUN dnf install         --disablerepo=*         --enablerepo=rhel-9-for-x86_64-baseos-rpms         -y         autofs         openldap-clients         && dnf clean all": while running runtime: exit statu
-s 127
-```
-
-Should use `buildah unshare; buildah bud` but going to use sudo instead.
-Copy $PULL_SECRET to /root/.config/containers/auth.json
-
-```bash
-$ sudo podman build -t quay.io/dbewley/autofs:v4.18 .
-```
-
-Podman login to repository
-
-```bash
-$ sudo podman login -u dbewley quay.io/dbewley/autofs
-$ sudo podman push quay.io/dbewley/autofs:v4.18
-```
-
-# Deploy
-
-Daemonset with a Node Selector (`demo: automount`) runs automount:
-
-`oc label node worker-5 demo=automount`
-
-## Enable sssd
-
-sssd is installed and enabled but does not start until a sssd.conf exists.
+The sssda service is already installed and enabled on nodes, does not start until a sssd.conf exists.
 
 * Enable sssd
 
+> [!IMPORTANT]
+> Use [machineconfig.bu](machineconfig.bu) to generate the [machineconfig.yaml](machineconfig.yaml). The [sssd.conf](scripts/sssd.conf) file will be included by the butane file.
+> `butane -d scripts < machineconfig.bu > machineconfig.yaml`
+
 ```bash
-oc create -f machineconfig.yaml
+$ oc create -f machineconfig.yaml
 ```
 
-* Confirm after MCO reboot
+* Wait for worker pool to update and reboot
+* Confirm sssd is running after MCO reboot
 
 ```bash
 [core@worker-4 ~]$ sudo -i
@@ -90,9 +47,16 @@ May 11 16:35:38 worker-4 sssd_be[1332]: Backend is offline
 May 11 16:35:40 worker-4 sssd_be[1332]: Backend is online
 ```
 
-* Confirm sssd is consulted by getent
+* Confirm sssd is consulted by getent and results are returned from LDAP
 
 ```bash
+# unmodified defaults
+[root@worker-4 ~]# grep -E '^(passwd|shadow|group|automount)' /etc/nsswitch.conf
+passwd:     files sss systemd altfiles
+group:      files sss systemd altfiles
+automount:  sss files
+shadow:     files
+
 [root@worker-4 ~]# getent passwd dale
 dale:*:1001:1001:Dale:/home/dale:/bin/bash
 ```
@@ -101,13 +65,58 @@ dale:*:1001:1001:Dale:/home/dale:/bin/bash
 [root@worker-4 ~]# cat /etc/passwd
 root:x:0:0:root:/root:/bin/bash
 core:x:1000:1000:CoreOS Admin:/var/home/core:/bin/bash
-
-[root@worker-4 ~]# grep -E '^(passwd|shadow|group|automount)' /etc/nsswitch.conf
-passwd:     files sss systemd altfiles
-group:      files sss systemd altfiles
-automount:  sss files
-shadow:     files
 ```
+
+
+# Autofs Image Building
+
+> [!NOTE] 
+> These RPMs are already installed on a OCP 4.18 node:
+>
+> - nfs-utils-2.5.4-26.el9_4.1.x86_64
+> - openldap-2.6.6-3.el9.x86_64
+> - sssd-2.9.4-6.el9_4.3.x86_64
+> - sssd-ldap-2.9.4-6.el9_4.3.x86_64
+
+RPMs needed:
+
+- autofs
+- openldap-clients
+
+
+* Copy $PULL_SECRET to ~/.config/containers/auth.json
+
+* Build the [automount container](Containerfile)
+
+Non root build fails with glibc.so.6 (rhel9)
+
+```bash
+$ podman build -t quay.io/dbewley/autofs/automount:v4.18 .
+...
+STEP 8/9: RUN dnf install         --disablerepo=*         --enablerepo=rhel-9-for-x86_64-baseos-rpms         -y         autofs         openldap-clients         && dnf clean all                                                   /bin/sh: error while loading shared libraries: /lib64/libc.so.6: cannot apply additional memory protection after relocation: Permission denied                                                                                     Error: building at STEP "RUN dnf install         --disablerepo=*         --enablerepo=rhel-9-for-x86_64-baseos-rpms         -y         autofs         openldap-clients         && dnf clean all": while running runtime: exit statu
+s 127
+```
+
+Should use `buildah unshare; buildah bud` but going to use sudo instead.
+Copy $PULL_SECRET to /root/.config/containers/auth.json
+
+```bash
+$ sudo podman build -t quay.io/dbewley/autofs:v4.18 .
+```
+
+Podman login to repository
+
+```bash
+$ sudo podman login -u dbewley quay.io/dbewley/autofs
+$ sudo podman push quay.io/dbewley/autofs:v4.18
+```
+
+# Deploy
+
+Deploy the [automount daemonset](daemonset.yaml) with a Node Selector (`demo: automount`) runs automount:
+
+`oc label node worker-5 demo=automount`
+
 
 # Watch out fors
 
