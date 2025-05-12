@@ -1,10 +1,9 @@
 # Configure an OpenShift node to use automount
 
-MachineConfig sets up sssd with LDAP knowledge.
+MachineConfig sets up sssd with LDAP knowledge and a daemonset runs automountd on the selected nodes.
 
-Daemonset with a Node Selector (`demo: automount`) runs automount:
 
-`oc label node worker-5 demo=automount`
+# Autofs Image Building
 
 > [!NOTE] 
 > These RPMs are already installed on a OCP 4.18 node:
@@ -19,7 +18,6 @@ RPMs needed:
 - autofs
 - openldap-clients
 
-# Image Building
 
 Copy $PULL_SECRET to ~/.config/containers/auth.json
 
@@ -47,6 +45,10 @@ $ sudo podman push quay.io/dbewley/autofs:v4.18
 ```
 
 # Deploy
+
+Daemonset with a Node Selector (`demo: automount`) runs automount:
+
+`oc label node worker-5 demo=automount`
 
 ## Enable sssd
 
