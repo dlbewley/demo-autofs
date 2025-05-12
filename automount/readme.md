@@ -131,11 +131,19 @@ Work towards automounting of home dirs.
 
 **Test 1 - getent passwd via LDAP**
 
-* ❌ `getent passwd dale` 
+* ✅ `getent passwd dale` 
+
+
+* Required fixes so far:
+   * Mount /var/lib/sss into pod
+   * Adding `sssd-client` rpm provided the missing `/lib64/libnss_sss.so2` (this is already on the host)
+
+> [!NOTE]
+> It may be possible to obviate the redundant sssd-client rpm in the container by mounting the hostPath /usr/lib64/libnss_sss.so.2
 
 **Test 2 - automount /home/dale in automount pod**
 
-* [ ]: `ls /home/dale`
+* [ ] `ls /home/dale`
 
 **Test 3 - view /home/dale mount in host os**
 
