@@ -158,11 +158,11 @@ Deploy the [automount daemonset](daemonset.yaml) with a Node Selector (`demo: au
 
 Work towards automounting of home dirs.
 
-## Host Teset Plan
+## Host Test Plan
 
 **Test 1 - getent passwd via LDAP**
 
-* ✅ `getent passwd dale` 
+* ✅ `getent passwd dale`
 
 ## Automount Pod Test Plan 
 
