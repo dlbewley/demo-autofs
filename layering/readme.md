@@ -92,22 +92,22 @@ $ oc patch configs.imageregistry.operator.openshift.io/cluster \
 
 ```bash
 # start with copy of global pull secret
-$ OUT=$(mktemp -d)
-$ oc extract secret/pull-secret -n openshift-config --to=$OUT
+OUT=$(mktemp -d)
+oc extract secret/pull-secret -n openshift-config --to=$OUT
 
-$ export REGISTRY=$(oc get route default-route -n openshift-image-registry \
-    --template='{{ .spec.host }}')
-$ export REGISTRY_USER=builder
-$ export REGISTRY_NAMESPACE=openshift
-$ export TOKEN=$(oc create token $REGISTRY_USER -n $REGISTRY_NAMESPACE)
-$ podman login --tls-verify=false \
-    --compat-auth-file $OUT/.dockerconfigjson \
-    -u $REGISTRY_USER \
-    -p $TOKEN \
-    $REGISTRY
+export REGISTRY=$(oc get route default-route -n openshift-image-registry \
+  --template='{{ .spec.host }}')
+export REGISTRY_USER=builder
+export REGISTRY_NAMESPACE=openshift
+export TOKEN=$(oc create token $REGISTRY_USER -n $REGISTRY_NAMESPACE)
+podman login --tls-verify=false \
+  --compat-auth-file $OUT/.dockerconfigjson \
+  -u $REGISTRY_USER \
+  -p $TOKEN \
+  $REGISTRY
 ```
 
-* Replace value of `$REGISTRY` with `image-registry.openshift-image-registry.svc` in  $OUT/.dockerconfigjson
+* Replace value of `$REGISTRY` with `image-registry.openshift-image-registry.svc:5000` in  $OUT/.dockerconfigjson
 
 ```bash
 $ vi $OUT/.dockerconfigjson
@@ -115,7 +115,7 @@ $ vi $OUT/.dockerconfigjson
 $ jq '.auths | keys' $OUT/.dockerconfigjson
 [
   "cloud.openshift.com",
-  "image-registry.openshift-image-registry.svc",
+  "image-registry.openshift-image-registry.svc:5000",
   "quay.io",
   "registry.connect.redhat.com",
   "registry.redhat.io"
@@ -167,6 +167,5 @@ oc create -f machineosconfig.yaml
 ```bash
 oc logs build-automount-worker-d0d785ce78be06d4acfc3085854e934b-s5zh5 -n openshift-machine-config-operator -f
 ```
-
 
 # ...to be continued
