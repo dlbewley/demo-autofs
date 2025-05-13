@@ -1,0 +1,20 @@
+FROM configs AS final
+
+LABEL layer-description="This image is used to run the automount daemonset on a OpenShift cluster"
+LABEL layer-maintainer="dbewley@redhat.com"
+LABEL layer-source="https://github.com/dbewley/demo-autofs"
+LABEL layer-repo="https://quay.io/repository/dbewley/autofs"
+
+# These RPMs are already installed on a OCP 4.18 node:
+#   - nfs-utils-2.5.4-26.el9_4.1.x86_64
+#   - openldap-2.6.6-3.el9.x86_64
+#   - sssd-2.9.4-6.el9_4.3.x86_64
+#   - sssd-ldap-2.9.4-6.el9_4.3.x86_64
+#   - sssd-client-2.9.4-6.el9_4.3.x86_64
+#   - nfs-utils-2.5.4-26.el9_4.1.x86_64
+
+RUN dnf install -y \
+        autofs \
+        openldap-clients \
+        && dnf clean all \
+        && ostree container commit

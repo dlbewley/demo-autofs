@@ -1,0 +1,31 @@
+apiVersion: machineconfiguration.openshift.io/v1alpha1
+kind: MachineOSConfig
+metadata:
+  name: automount-worker
+spec:
+  machineConfigPool:
+    name: worker-test
+  buildInputs:
+    containerFile: 
+    - containerfileArch: noarch
+      content: |-
+        FROM configs AS final
+        LABEL layered-source="https://github.com/dbewley/demo-autofs"
+        RUN dnf install -y \
+          autofs \
+          openldap-clients \
+          && dnf clean all \
+          && ostree container commit
+    imageBuilder: 
+      imageBuilderType: PodImageBuilder
+    # MCO uses to pull the base operating system image from the registry
+    baseImagePullSecret: 
+      # a copy of openshift-config:secret/pull-secret
+      name: pull-secret
+    renderedImagePushspec: image-registry.openshift-image-registry.svc:5000/openshift/os-image:latest 
+    renderedImagePushSecret: 
+      name: push-secret
+  buildOutputs: 
+    # nodes need in order to pull the newly built custom layered image
+    currentImagePullSecret:
+      name: push-secret
