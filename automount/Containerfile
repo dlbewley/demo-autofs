@@ -14,6 +14,7 @@ LABEL repo="https://quay.io/repository/dbewley/autofs"
 #   - sssd-2.9.4-6.el9_4.3.x86_64
 #   - sssd-ldap-2.9.4-6.el9_4.3.x86_64
 #   - sssd-client-2.9.4-6.el9_4.3.x86_64
+#   - nfs-utils-2.5.4-26.el9_4.1.x86_64
 
 RUN dnf install \
         --disablerepo=* \
@@ -23,6 +24,7 @@ RUN dnf install \
         openldap-clients \
         sssd-client \
         strace \
+        nfs-utils \
         && dnf clean all
 
 ENTRYPOINT [ "automount" ]
