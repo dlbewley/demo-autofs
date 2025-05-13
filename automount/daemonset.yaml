@@ -38,21 +38,30 @@ spec:
               subPath: sssd.conf
             - name: lib-sssd
               mountPath: /var/lib/sss
+
             # works without this, but sssd-client is installed in the image
             # - name: lib64-sssd
             #   mountPath: /lib64/sssd
+
+            # these allow sss via files lookup, but without these ldap is not used
             - name: automount-conf
               mountPath: /etc/auto.master.d/extra.autofs
               subPath: extra.autofs
             - name: automount-conf
               mountPath: /etc/auto.home
               subPath: auto.home
+
             - name: var-cache
               mountPath: /var/cache
+
+            # mount does not show up a /home
             - name: home
               mountPath: /home
               # Bidirectional mount propagation is required
               mountPropagation: Bidirectional
+              # [root@worker-5 sbin]# mount |grep nfs
+              # nfs.lab.bewley.net:/exports/home/dale on /var/lib/kubelet/pods/7db5596b-8538-49f9-81d8-21a530af0b37/volumes/kubernetes.io~nfs/nfs-home-volume type nfs4 (ro,relatime,vers=4.2,rsize=262144,wsize=262144,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.4.205,local_lock=none,addr=192.168.4.120)
+
             - name: mnt
               mountPath: /mnt
               # Bidirectional mount propagation is required
@@ -63,10 +72,6 @@ spec:
         - name: lib-sssd
           hostPath:
             path: /var/lib/sss
-        # # openat(AT_FDCWD, "/lib64/glibc-hwcaps/x86-64-v3/libnss_sss.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-        # - name: lib64-sssd
-        #   hostPath:
-        #     path: /lib64/sssd
 
         - name: var-cache
           hostPath:
