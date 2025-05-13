@@ -83,6 +83,10 @@ RPMs needed:
 - autofs
 - openldap-clients
 
+These had to be added even though in the host OS:
+
+
+
 
 * Copy $PULL_SECRET to ~/.config/containers/auth.json
 
@@ -173,46 +177,43 @@ Work towards automounting of home dirs.
 > [!NOTE]
 > It may be possible to obviate the redundant sssd-client rpm in the container by mounting the hostPath /usr/lib64/libnss_sss.so.2
 
-**Test 3 - automount /home/dale in automount pod**
+**Test 3.1 - automount /home/dale in automount pod and automount=sss**
 
 
 * ❌ `ls /home/dale`
 
+Does not work with default auto.master, which should check LDAP.
 
-When configuring a automount map from `files` rather than `ldap` it attempted to mount but lacked the /sbin/mount.nfs helper
+**Test 3.2 - automount /home/dale in automount pod and automount=files**
 
+* ✅ `ls /home/dale`
+
+Does work with auto.master  pointing to auto.home with static mapping to home dirs.
+
+_/etc/auto.master.d/extra.autofs_
 ```
-sh-5.1# cat /etc/auto.master.d/extra.autofs
 /home /etc/auto.home
-sh-5.1# cat /etc/auto.home
-* -rw,soft,intr nfs.lab.bewley.net:/exports/home/&sh-5.1#
 ```
 
+_/etc/auto.home_
 ```
-handle_packet: type = 3
-handle_packet_missing_indirect: token 2, name dale, request pid 1448295
-attempting to mount entry /home/dale
-lookup_mount: lookup(file): looking up dale
-lookup_mount: lookup(file): dale -> -rw,soft,intr nfs.lab.bewley.net:/exports/home/&
-parse_mount: parse(sun): expanded entry: -rw,soft,intr nfs.lab.bewley.net:/exports/home/dale
-parse_mount: parse(sun): gathered options: rw,soft,intr
-parse_mount: parse(sun): dequote("nfs.lab.bewley.net:/exports/home/dale") -> nfs.lab.bewley.net:/exports/home/dale
-parse_mount: parse(sun): core of entry: options=rw,soft,intr, loc=nfs.lab.bewley.net:/exports/home/dale
-sun_mount: parse(sun): mounting root /home, mountpoint dale, what nfs.lab.bewley.net:/exports/home/dale, fstype nfs, options rw,soft,intr
-mount(nfs): root=/home name=dale what=nfs.lab.bewley.net:/exports/home/dale, fstype=nfs, options=rw,soft,intr
-mount(nfs): nfs options="rw,soft,intr", nobind=0, nosymlink=0, ro=0
-mount_mount: mount(nfs): calling mkdir_path /home/dale
-mount(nfs): calling mount -t nfs -s -o rw,soft,intr nfs.lab.bewley.net:/exports/home/dale /home/dale
-do_spawn: >> mount: /home/dale: bad option; for several filesystems (e.g. nfs, cifs) you might need a /sbin/mount.<type> helper program.
-mount(nfs): nfs: mount failure nfs.lab.bewley.net:/exports/home/dale on /home/dale
-dev_ioctl_send_fail: token = 2
-failed to mount /home/dale
-handle_packet: type = 3
-handle_packet_missing_indirect: token 3, name dale, request pid 1448295
-dev_ioctl_send_fail: token = 3
+* -rw,soft,intr nfs.lab.bewley.net:/exports/home/&
 ```
+
+Required installation of nfs-utils to get `/sbin/mount.nfs` binary in automount pod.
+
 
 **Test 4 - view /home/dale mount in host os**
+
+* ❌ `ls /home/dale`
+
+> [!IMPORTANT]
+> Even though the pod is privileged and the volumemount is bidirection, the mount is not showing up at /var/home nor /home in the host OS.
+
+```
+[root@worker-5 sbin]# mount |grep nfs
+nfs.lab.bewley.net:/exports/home/dale on /var/lib/kubelet/pods/7db5596b-8538-49f9-81d8-21a530af0b37/volumes/kubernetes.io~nfs/nfs-home-volume type nfs4 (ro,relatime,vers=4.2,rsize=262144,wsize=262144,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.4.205,local_lock=none,addr=192.168.4.120)
+```
 
 **Test 5 - view /home/dale mount in user workload pod**
 
