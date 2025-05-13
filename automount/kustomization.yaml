@@ -8,19 +8,19 @@ images:
     newName: quay.io/dbewley/autofs
     newTag: v4.18
 
-configMapGenerator:
-  # - name: automount-run
-  #   files:
-  #     - run.sh
+generatorOptions:
+  disableNameSuffixHash: true
 
+configMapGenerator:
   - name: automount-conf
     files:
       - scripts/extra.autofs
-      - scripts/extra.nfs
+      - scripts/auto.home
 
    # configmap is only created for reference not used
    # it is applied via MCO directly
    # probably to be removed in a future release
+   # it was not necessary for passwd lookups. adding in as testing of autofs proceeeds
   - name: sssd-conf
     files:
       - scripts/sssd.conf

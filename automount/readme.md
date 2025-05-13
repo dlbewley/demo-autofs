@@ -111,6 +111,39 @@ $ sudo podman login -u dbewley quay.io/dbewley/autofs
 $ sudo podman push quay.io/dbewley/autofs:v4.18
 ```
 
+```
+[root@client etc]# automount --help
+Usage: automount [options] [master_map_name]
+        -h --help       this text
+        -p --pid-file f write process id to file f
+        -t --timeout n  auto-unmount in n seconds (0-disable)
+        -M --master-wait n
+                        maximum wait time (seconds) for master
+                        map to become available
+        -v --verbose    be verbose
+        -d --debug      log debuging info
+        -Dvariable=value, --define variable=value
+                        define global macro variable
+        -S --systemd-service
+                        run automounter as a systemd service
+        -f --foreground do not fork into background
+        -r --random-multimount-selection
+                        use random replicated server selection
+        -m --dumpmaps [<map type> <map name>]
+                        dump automounter maps and exit
+        -n --negative-timeout n
+                        set the timeout for failed key lookups.
+        -O --global-options
+                        specify global mount options
+        -l --set-log-priority priority path [path,...]
+                        set daemon log verbosity
+        -C --dont-check-daemon
+                        don't check if daemon is already running
+        -F --force      forceably clean up known automounts at start
+        -U --force-exit forceably clean up known automounts and exit
+        -V --version    print version, build config and exit
+```
+
 # Deploy
 
 Deploy the [automount daemonset](daemonset.yaml) with a Node Selector (`demo: automount`) runs automount:
@@ -121,18 +154,17 @@ Deploy the [automount daemonset](daemonset.yaml) with a Node Selector (`demo: au
 
 Work towards automounting of home dirs.
 
-## Host Plan
+## Host Teset Plan
 
 **Test 1 - getent passwd via LDAP**
 
 * ✅ `getent passwd dale` 
 
-## Automount Pod Plan 
+## Automount Pod Test Plan 
 
-**Test 1 - getent passwd via LDAP**
+**Test 2 - getent passwd via LDAP**
 
 * ✅ `getent passwd dale` 
-
 
 * Required fixes so far:
    * Mount /var/lib/sss into pod
@@ -141,15 +173,50 @@ Work towards automounting of home dirs.
 > [!NOTE]
 > It may be possible to obviate the redundant sssd-client rpm in the container by mounting the hostPath /usr/lib64/libnss_sss.so.2
 
-**Test 2 - automount /home/dale in automount pod**
+**Test 3 - automount /home/dale in automount pod**
 
-* [ ] `ls /home/dale`
 
-**Test 3 - view /home/dale mount in host os**
+* ❌ `ls /home/dale`
 
-**Test 4 - view /home/dale mount in user workload pod**
 
-**Test 5 - access /home/dale mount in user workload pod as UID 1001 GID 1001**
+When configuring a automount map from `files` rather than `ldap` it attempted to mount but lacked the /sbin/mount.nfs helper
+
+```
+sh-5.1# cat /etc/auto.master.d/extra.autofs
+/home /etc/auto.home
+sh-5.1# cat /etc/auto.home
+* -rw,soft,intr nfs.lab.bewley.net:/exports/home/&sh-5.1#
+```
+
+```
+handle_packet: type = 3
+handle_packet_missing_indirect: token 2, name dale, request pid 1448295
+attempting to mount entry /home/dale
+lookup_mount: lookup(file): looking up dale
+lookup_mount: lookup(file): dale -> -rw,soft,intr nfs.lab.bewley.net:/exports/home/&
+parse_mount: parse(sun): expanded entry: -rw,soft,intr nfs.lab.bewley.net:/exports/home/dale
+parse_mount: parse(sun): gathered options: rw,soft,intr
+parse_mount: parse(sun): dequote("nfs.lab.bewley.net:/exports/home/dale") -> nfs.lab.bewley.net:/exports/home/dale
+parse_mount: parse(sun): core of entry: options=rw,soft,intr, loc=nfs.lab.bewley.net:/exports/home/dale
+sun_mount: parse(sun): mounting root /home, mountpoint dale, what nfs.lab.bewley.net:/exports/home/dale, fstype nfs, options rw,soft,intr
+mount(nfs): root=/home name=dale what=nfs.lab.bewley.net:/exports/home/dale, fstype=nfs, options=rw,soft,intr
+mount(nfs): nfs options="rw,soft,intr", nobind=0, nosymlink=0, ro=0
+mount_mount: mount(nfs): calling mkdir_path /home/dale
+mount(nfs): calling mount -t nfs -s -o rw,soft,intr nfs.lab.bewley.net:/exports/home/dale /home/dale
+do_spawn: >> mount: /home/dale: bad option; for several filesystems (e.g. nfs, cifs) you might need a /sbin/mount.<type> helper program.
+mount(nfs): nfs: mount failure nfs.lab.bewley.net:/exports/home/dale on /home/dale
+dev_ioctl_send_fail: token = 2
+failed to mount /home/dale
+handle_packet: type = 3
+handle_packet_missing_indirect: token 3, name dale, request pid 1448295
+dev_ioctl_send_fail: token = 3
+```
+
+**Test 4 - view /home/dale mount in host os**
+
+**Test 5 - view /home/dale mount in user workload pod**
+
+**Test 6 - access /home/dale mount in user workload pod as UID 1001 GID 1001**
 
 
 # Potential Pitfalls?
