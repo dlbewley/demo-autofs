@@ -78,7 +78,7 @@ EOF
 ```
 
 * Enable the on cluster registry using above PVC. 
-Optionally [expose the registry]](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/registry/securing-exposing-registry#securing-exposing-registry) for testing.
+Optionally [expose the registry](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/registry/securing-exposing-registry#securing-exposing-registry) for testing.
 
 ```bash
 # Enable registry - if none exists outside cluster
@@ -213,25 +213,27 @@ machineosbuild.machineconfiguration.openshift.io/worker-automount-ed7a188f8fcd6d
 
 ## Apply Layered Image to Nodes
 
+> [!WARNING]
+> Stop here! 
+> I'm currently stuck in a degraded state. 
+> https://redhat-internal.slack.com/archives/C02CZNQHGN8/p1747245572935239
+
+```
+oc get mcp
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-e8ce721963e267ab05ddb740a9ea87e9             True      False      False      3              3                   3                     0                      9d
+worker             rendered-worker-a75414c6dac73af84fc4efc03e2605c2             False     True       True       2              1                   1                     1                      9d
+worker-automount   rendered-worker-automount-437956a448e342156edafd16b2484108   True      False      False      0              0                   0                     0                      92m
+```
+
+* TODO:
+
 Adjust the node-role.kubernetes.io label on the test nodes so they will be configured by the worker-auomount pool which applies the automount configs and the layered image.
 
 ```bash
+# TODO
 oc label node worker-5 node-role.kubernetes.io/worker- node-role.kubernetes.io/worker-automount=''
-
-oc get mcp
-NAME          CONFIG                                                  UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master        rendered-master-6da92f7c2ea89a849a3e8d34ae2df208        True      False      False      3              3                   3                     0                      8d
-worker        rendered-worker-fe0c58cc7a2916e33b82d9c62bd30e2b        True      False      False      2              2                   2                     0                      8d
-worker-test   rendered-worker-test-fe0c58cc7a2916e33b82d9c62bd30e2b   False     False      False      1              0                   0                     0                      5h40m
-
-oc patch machineconfigpool/worker-test \
-    --type merge --patch '{"spec":{"paused":false}}'
 ```
-
-I'm currently stuck in a degraded state.
-
-https://redhat-internal.slack.com/archives/C02CZNQHGN8/p1747245572935239
-
 
 # ...to be continued
 
