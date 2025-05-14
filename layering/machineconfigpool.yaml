@@ -2,45 +2,19 @@ apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfigPool
 metadata:
   annotation:
-    description: Exists just to enable testing of MachineOSConfig and MachineOSBuild in a vacuum
+    description: Worker nodes with automount enabled
   labels:
-    pools.operator.machineconfiguration.openshift.io/worker-test: ""
-  name: worker-test
+    pools.operator.machineconfiguration.openshift.io/worker-automount: ""
+  name: worker-automount
 spec:
-  configuration:
-    name: rendered-worker-fe0c58cc7a2916e33b82d9c62bd30e2b
-    source:
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 00-worker
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 01-worker-container-runtime
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 01-worker-kubelet
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 50-workers-chrony-configuration
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 97-worker-generated-kubelet
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 98-worker-generated-kubelet
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 99-worker-generated-registries
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 99-worker-ssh
-    - apiVersion: machineconfiguration.openshift.io/v1
-      kind: MachineConfig
-      name: 99-worker-sssd-config
   machineConfigSelector:
-    matchLabels:
-      machineconfiguration.openshift.io/role: worker
+    matchExpressions:
+      - key: machineconfiguration.openshift.io/role
+        operator: In
+        values:
+          - worker
+          - worker-automount
   nodeSelector:
     matchLabels:
-      node-role.kubernetes.io/worker-test: ""
+      node-role.kubernetes.io/worker-automount: ""
   paused: true
