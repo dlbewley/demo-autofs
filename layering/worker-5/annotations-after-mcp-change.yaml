@@ -1,0 +1,28 @@
+csi.volume.kubernetes.io/nodeid: '{"openshift-storage.cephfs.csi.ceph.com":"worker-5","openshift-storage.rbd.csi.ceph.com":"worker-5"}'
+k8s.ovn.org/host-cidrs: '["192.168.1.93/24","192.168.4.205/24"]'
+k8s.ovn.org/l3-gateway-config: '{"default":{"mode":"shared","bridge-id":"br-ex","interface-id":"br-ex_worker-5","mac-address":"00:50:56:b4:9f:8a","ip-addresses":["192.168.4.205/24"],"ip-address":"192.168.4.205/24","next-hops":["192.168.4.1"],"next-hop":"192.168.4.1","node-port-enable":"true","vlan-id":"0"}}'
+k8s.ovn.org/network-ids: '{"default":"0"}'
+k8s.ovn.org/node-chassis-id: 02da4872-6546-49e8-b7bc-0d93ac50ac02
+k8s.ovn.org/node-gateway-router-lrp-ifaddrs: '{"default":{"ipv4":"100.64.0.7/16"}}'
+k8s.ovn.org/node-id: "7"
+k8s.ovn.org/node-masquerade-subnet: '{"ipv4":"169.254.0.0/17","ipv6":"fd69::/112"}'
+k8s.ovn.org/node-primary-ifaddr: '{"ipv4":"192.168.4.205/24"}'
+k8s.ovn.org/node-subnets: '{"default":["10.129.2.0/23"]}'
+k8s.ovn.org/node-transit-switch-port-ifaddr: '{"ipv4":"100.88.0.7/16"}'
+k8s.ovn.org/remote-zone-migrated: worker-5
+k8s.ovn.org/zone-name: worker-5
+kubevirt.io/heartbeat: "2025-05-15T18:58:16Z"
+kubevirt.io/ksm-handler-managed: "false"
+machineconfiguration.openshift.io/controlPlaneTopology: HighlyAvailable
+machineconfiguration.openshift.io/currentConfig: rendered-worker-8ecca25a0517779ecf6829f69f66501a
+machineconfiguration.openshift.io/desiredConfig: rendered-worker-automount-6312015e2cef0f99c445d816e90af80b
+machineconfiguration.openshift.io/desiredDrain: drain-rendered-worker-automount-6312015e2cef0f99c445d816e90af80b
+machineconfiguration.openshift.io/desiredImage: image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310
+machineconfiguration.openshift.io/lastAppliedDrain: drain-rendered-worker-automount-6312015e2cef0f99c445d816e90af80b
+machineconfiguration.openshift.io/lastObservedServerCAAnnotation: "false"
+machineconfiguration.openshift.io/lastSyncedControllerConfigResourceVersion: "11371814"
+machineconfiguration.openshift.io/reason: |-
+  failed to update OS to image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310: error running rpm-ostree rebase --experimental ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310: error: Old and new refs are equal: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310
+  : exit status 1
+machineconfiguration.openshift.io/state: Degraded
+volumes.kubernetes.io/controller-managed-attach-detach: "true"

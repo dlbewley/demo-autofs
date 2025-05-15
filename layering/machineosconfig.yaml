@@ -19,6 +19,7 @@ spec:
     imageBuilder: 
       imageBuilderType: PodImageBuilder
     # MCO uses to pull the base operating system image from the registry
+    # this will be obviated in OCP 4.19
     baseImagePullSecret: 
       # a copy of openshift-config:secret/pull-secret
       name: pull-secret
