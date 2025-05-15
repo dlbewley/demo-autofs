@@ -175,6 +175,7 @@ machineosconfig.machineconfiguration.openshift.io/worker-automount created
 
 * A Job in the openshift-machine-config-operator namespace defined by the machineosconfig will begin a machineosbuild
 
+```
 oc get jobs -n openshift-machine-config-operator
 NAME                                                      STATUS    COMPLETIONS   DURATION   AGE
 build-worker-automount-ac258f40fc636fe53467420d7b557880   Running   0/1           15s        15s
@@ -323,6 +324,22 @@ oc logs -n openshift-machine-config-operator machine-config-daemon-ht2wx -f
 >
 > E0515 18:56:46.084164   14695 writer.go:226] Marking Degraded due to: "failed to update OS to image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310: error running rpm-ostree rebase --experimental ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310: error: Old and new refs are equal: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310\n: exit status 1"
 
+
+```bash
+oc get nodes
+ocNAME       STATUS                        ROLES                         AGE    VERSION
+master-1   Ready                         control-plane,master,worker   10d    v1.31.7
+master-2   Ready                         control-plane,master,worker   10d    v1.31.7
+master-3   Ready                         control-plane,master,worker   10d    v1.31.7
+worker-4   Ready                         worker                        10d    v1.31.7
+worker-5   NotReady,SchedulingDisabled   worker-automount              169m   v1.31.7
+
+oc get mcp
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-fe3cb1c0f79e5d3fabf5de4c6b422f2e             True      False      False      3              3                   3                     0                      10d
+worker             rendered-worker-8ecca25a0517779ecf6829f69f66501a             True      False      False      1              1                   1                     0                      10d
+worker-automount   rendered-worker-automount-6312015e2cef0f99c445d816e90af80b   False     True       True       1              0                   0                     1                      164m
+```
 
 # References
 
