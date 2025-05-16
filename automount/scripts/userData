@@ -11,8 +11,8 @@ users:
     passwd: $y$j9T$hpEP7mxg5d5Ys3R3CqB8R.$qvhmcXLcqmqwXA6GV0MnVHyuHf1VMVDulNSFOF76Ge3
 
 rh_subscription:
-  org: 13203895
-  activation-key: jinga-202404
+  org: 00000000
+  activation-key: EXAMPLE
   enable-repo:
     - 'rhel-9-for-x86_64-baseos-rpms'
     - 'rhel-9-for-x86_64-appstream-rpms'
