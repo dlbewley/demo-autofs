@@ -6,6 +6,12 @@ The [RHCOS Image Layering](https://docs.redhat.com/en/documentation/openshift_co
 
 [internal deck](https://docs.google.com/presentation/d/14rIn35xjR8cptqzYwDoFO6IOWIUNkSBZG3K2-5WJKok/edit?slide=id.g547716335e_0_220#slide=id.g547716335e_0_220)
 
+
+Draft docs:
+
+* https://issues.redhat.com/browse/OSDOCS-13346
+* https://87486--ocpdocs-pr.netlify.app/openshift-enterprise/latest/machine_configuration/mco-coreos-layering.html
+
 > [!IMPORTANT]
 > On cluster image layering is TP as of 4.18 and anticipated to GA in 4.19.
 
@@ -37,17 +43,10 @@ the push and pull secrets to use
 
 ## Prerequisites
 
-### Tech Preview Feature Gate
+### OpenShift 4.19
 
-* [Enable](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/nodes/working-with-clusters#nodes-cluster-enabling) the TechPreviewNoUpgrade feature set by using the feature gates. 
-
-> [!WARNING]
-> Enabling the TechPreviewNoUpgrade feature set on your cluster cannot be undone and prevents minor version updates. You should not enable this feature set on production clusters.
-
-```bash
-$ oc patch featuregate/cluster --type=json \
-  -p='[{"op": "add", "path": "/spec/featureSet", "value": "TechPreviewNoUpgrade"}]'
-```
+* Testing on 4.18 with TP feature enabled was not successful.
+* Tested using OpenShift 4.19rc2 on 2025-05-20
 
 ### Image Registry to hold layered image
 
@@ -99,16 +98,20 @@ $ oc patch configs.imageregistry.operator.openshift.io/cluster \
 
 ### Pull and Push Secrets
 
-Create a pull-secret with the ability to push to the cluster registry in the openshift namespace. Create this as `push-secret`.
+Create a pull-secret with the ability to push to the cluster registry in the `openshift-machine-config-operator` namespace. 
 
-* Create a 1 year duration token per this KCS https://access.redhat.com/solutions/7025261 and place that in a pull-secret.
+* Create a 2 year duration token per this KCS https://access.redhat.com/solutions/7025261
 
 ```bash
 export REGISTRY=image-registry.openshift-image-registry.svc:5000
 export REGISTRY_USER=builder
-export REGISTRY_NAMESPACE=openshift
-export TOKEN=$(oc create token $REGISTRY_USER -n $REGISTRY_NAMESPACE --duration=$((365*24))h)
+export REGISTRY_NAMESPACE=openshift-machine-config-operator
+export TOKEN=$(oc create token $REGISTRY_USER -n $REGISTRY_NAMESPACE --duration=$((720*24))h)
+```
 
+* Use this token to create a secret named `push-secret`.
+
+```bash
 oc create secret docker-registry push-secret \
   -n openshift-machine-config-operator \
   --docker-server=$REGISTRY \
@@ -116,19 +119,36 @@ oc create secret docker-registry push-secret \
   --docker-password=$TOKEN
 ```
 
-* Create or obtain a pull secret with permission to pull the base image from Red Hat. Copy this secret to openshift-machine-config-operator as `pull-secret`.
+> [!NOTE]
+> Verify the expiration on the token just created:
+> `oc extract secret/push-secret -n openshift-machine-config-operator --to=- | jq -r '.auths."image-registry.openshift-image-registry.svc:5000".auth' | base64 -d | cut -d. -f2 | base64 -d`
+> # .dockerconfigjson
+> {"aud":["https://kubernetes.default.svc"],"exp":1809913549,"iat":1747705549,"iss":"https://kubernetes.default.svc","jti":"37ec3a2e-bdb1-4897-bc6d-c2d433b4f69f","kubernetes.io":{"namespace":"openshift-machine-config-operator","serviceaccount":{"name":"builder","uid":"7f114eb8-da6b-4be1-8bc4-6c9e9119a252"}},"nbf":1747705549,"sub":"system:serviceaccount:openshift-machine-config-operator:builder"}%
+> `date -r 1809913549`
+> Sun May  9 21:45:49 EDT 2027
 
-Duplicate the global [pull secret](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/images/managing-images#using-image-pull-secrets) to openshift-machine-config-operator namespace
+* Combine the global pull secret and the just created push secret. Refer to this secret in the `MachineOSConfig.spec.baseImagePullSecret`
 
 ```bash
-OUT=$(mktemp -d)
-oc extract secret/pull-secret -n openshift-config --to=$OUT
-# make changes to $OUT/.dockerconfigjson if desired
-oc create secret generic pull-secret \
+oc extract secret/pull-secret -n openshift-config --to=- > pull-secret.json
+
+jq -s '.[0] * .[1]' pull-secret.json push-secret.json > pull-and-push-secret.json
+
+oc create secret generic pull-and-push-secret \
   -n openshift-machine-config-operator \
-  --type=kubernetes.io/dockerconfigjson \
-  --from-file=.dockerconfigjson=$OUT/.dockerconfigjson
-rm -rf $OUT
+  --from-file=.dockerconfigjson=pull-and-push-secret.json \
+  --type=kubernetes.io/dockerconfigjson
+```
+
+* Confirm pull secret references in  [machineosconfig.yaml](machineosconfig.yaml) and create it. This machineconfig is associated with the just created `worker-automount` machineconfig pool.
+
+```bash
+cat machineosconfig.yaml | yq '.spec | with_entries(select(.key | contains("Secret")))'
+
+baseImagePullSecret:
+  name: pull-and-push-secret
+renderedImagePushSecret:
+  name: push-secret
 ```
 
 ## Build Configs and Layered Image
@@ -140,9 +160,50 @@ oc create -f machineconfigpool.yaml
 
 oc get mcp
 NAME               CONFIG                                             UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-fe3cb1c0f79e5d3fabf5de4c6b422f2e   True      False      False      3              3                   3                     0                      10d
-worker             rendered-worker-8ecca25a0517779ecf6829f69f66501a   True      False      False      2              2                   2                     0                      10d
-worker-automount                                                                                                                                                                      4s
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1   True      False      False      3              3                   3                     0                      9h
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718   True      False      False      6              6                   6                     0                      9h
+worker-automount                                                                                                                                                                      2s
+```
+
+> [!NOTE]
+> **Entitlements**
+>
+> Entitlement to download RPMs are enabled by an automatic copy of the `etc-pki-entitlement` secret from the `openshift-config-managed` namespace into the openshift-machine-config-operator namespace.
+
+* Create the MachineOSConfig
+
+```bash
+oc create -f machineosconfig.yaml
+machineosconfig.machineconfiguration.openshift.io/worker-automount created
+
+# confirm the entitlement secret was copied from openshift-config-managed
+oc get secrets |grep entitle
+etc-pki-entitlement-worker-automount                      Opaque                                2      49s
+```
+
+* A Job in the openshift-machine-config-operator namespace defined by the machineosconfig will begin a machineosbuild
+
+```bash
+oc get jobs -n openshift-machine-config-operator
+NAME                                                      STATUS    COMPLETIONS   DURATION   AGE
+build-worker-automount-641629bea6074d48da5d021cf5176b0b   Running   0/1           12m        12m
+
+oc get machineosbuild
+NAME                                                PREPARED   BUILDING   SUCCEEDED   INTERRUPTED   FAILED
+worker-automount-641629bea6074d48da5d021cf5176b0b   False      True       False       False         False    12m
+```
+
+* Pod start up takes a couple of minutes. Then watch the logs and confirm a successful push of the resulting image.
+
+```bash
+oc logs -f build-worker-automount-8789b61df9e702d51c6980cc268e85a7-j9vl6 -n openshift-machine-config-operator
+... # SUCESS
++ buildah push --storage-driver vfs --authfile=/tmp/final-image-push-creds/config.json --digestfile=/tmp/done/digestfile --cert-dir /var/run/secrets/kubernetes.io/serviceaccount image-registry.openshift-image-registry.svc:5000/
+openshift-machine-config-operator/os-image:worker-automount-8789b61df9e702d51c6980cc268e85a7
+...
+Copying config sha256:0edf94edf55b9bedc2d3b9659188ca8528bd5dc3ed0397c866f7338d47e034b3
+Writing manifest to image destination
++ return 0
 ```
 
 * Create the [machineconfigs](machineconfig.yaml) that configure autofs.
@@ -154,149 +215,54 @@ machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs-servi
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
 ```
 
-* Confirm the pull-secret and push-secrets exist
-
-```bash
-oc get secret/pull-secret -n openshift-machine-config-operator
-NAME          TYPE                             DATA   AGE
-pull-secret   kubernetes.io/dockerconfigjson   1      3m38s
-
-oc get secret/push-secret -n openshift-machine-config-operator
-NAME          TYPE                             DATA   AGE
-push-secret   kubernetes.io/dockerconfigjson   1      4m14s
-```
-
-* Confirm pull secret references in  [machineosconfig.yaml](machineosconfig.yaml) and create it. This machineconfig is associated with the just created `worker-automount` machineconfig pool.
-
-```bash
-oc create -f machineosconfig.yaml
-machineosconfig.machineconfiguration.openshift.io/worker-automount created
-```
-
-* A Job in the openshift-machine-config-operator namespace defined by the machineosconfig will begin a machineosbuild
-
-```
-oc get jobs -n openshift-machine-config-operator
-NAME                                                      STATUS    COMPLETIONS   DURATION   AGE
-build-worker-automount-ac258f40fc636fe53467420d7b557880   Running   0/1           15s        15s
-
-oc get machineosbuild
-NAME                                                PREPARED   BUILDING   SUCCEEDED   INTERRUPTED   FAILED
-worker-automount-ac258f40fc636fe53467420d7b557880   False      True       False       False         False
-```
-
-* Pod start up takes a couple of minutes. Then watch the logs and confirm a successful push of the resulting image.
-
-```bash
-oc logs -f build-worker-automount-ac258f40fc636fe53467420d7b557880-l49zq -n openshift-machine-config-operator
-...
-Writing manifest to image destination
-+ return 0
-
-oc get machineosconfig,machineosbuild
-NAME                                                                 AGE
-machineosconfig.machineconfiguration.openshift.io/worker-automount   38m
-
-NAME                                                                                                 PREPARED   BUILDING   SUCCEEDED   INTERRUPTED   FAILED
-machineosbuild.machineconfiguration.openshift.io/worker-automount-ed7a188f8fcd6d7d6be3c5549299ba47   False      False      True        False         False
-```
-
-* Successful build:
-
-```
-oc get machineosbuild
-NAME                                                PREPARED   BUILDING   SUCCEEDED   INTERRUPTED   FAILED
-worker-automount-ac258f40fc636fe53467420d7b557880   False      False      True        False         False
-
-oc describe machineosbuild/worker-automount-ac258f40fc636fe53467420d7b557880
-Name:         worker-automount-ac258f40fc636fe53467420d7b557880
-Namespace:
-Labels:       machineconfiguration.openshift.io/machine-os-config=worker-automount
-              machineconfiguration.openshift.io/rendered-machine-config=rendered-worker-automount-6312015e2cef0f99c445d816e90af80b
-              machineconfiguration.openshift.io/target-machine-config-pool=worker-automount
-Annotations:  <none>
-API Version:  machineconfiguration.openshift.io/v1alpha1
-Kind:         MachineOSBuild
-Metadata:
-  Creation Timestamp:  2025-05-15T18:32:15Z
-  Generation:          1
-  Resource Version:    11381424
-  UID:                 655afad6-0c33-46fc-b98c-4f11f8bcab8f
-Spec:
-  Config Generation:  1
-  Desired Config:
-    Name:  rendered-worker-automount-6312015e2cef0f99c445d816e90af80b
-  Machine OS Config:
-    Name:                   worker-automount
-  Rendered Image Pushspec:  image-registry.openshift-image-registry.svc:5000/openshift/os-image:worker-automount-ac258f40fc636fe53467420d7b557880
-  Version:                  1
-Status:
-  Build End:    2025-05-15T18:43:46Z
-  Build Start:  2025-05-15T18:32:26Z
-  Builder Reference:
-    Build Pod:
-      Group:
-      Name:              build-worker-automount-ac258f40fc636fe53467420d7b557880
-      Namespace:         openshift-machine-config-operator
-      Resource:          11381343
-    Image Builder Type:  PodImageBuilder
-  Conditions:
-    Last Transition Time:  2025-05-15T18:32:26Z
-    Message:               Build Prepared and Pending
-    Reason:                Prepared
-    Status:                False
-    Type:                  Prepared
-    Last Transition Time:  2025-05-15T18:32:26Z
-    Message:               Build Failed
-    Reason:                Failed
-    Status:                False
-    Type:                  Failed
-    Last Transition Time:  2025-05-15T18:32:26Z
-    Message:               Build Interrupted
-    Reason:                Interrupted
-    Status:                False
-    Type:                  Interrupted
-    Last Transition Time:  2025-05-15T18:43:46Z
-    Message:               Image Build In Progress
-    Reason:                Building
-    Status:                False
-    Type:                  Building
-    Last Transition Time:  2025-05-15T18:43:46Z
-    Message:               Build Ready
-    Reason:                Ready
-    Status:                True
-    Type:                  Succeeded
-  Final Image Pullspec:    image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310
-Events:                    <none>
-```
-
 ## Apply Layered Image to Nodes
 
-Save node annotations for debugging [worker-5/annotations-at-node-build.yaml](worker-5/annotations-at-node-build.yaml)
-
 ```bash
-oc get node worker-5 -o yaml | yq '.metadata.annotations' > worker-5/annotations-at-node-build.yaml
+oc get clusterversion
+NAME      VERSION       AVAILABLE   PROGRESSING   SINCE   STATUS
+version   4.19.0-rc.2   True        False         20h     Cluster version is 4.19.0-rc.2
+
+oc get nodes
+NAME                       STATUS   ROLES                  AGE   VERSION
+hub-v57jl-cnv-8swxv        Ready    worker                 12h   v1.32.4
+hub-v57jl-master-0         Ready    control-plane,master   21h   v1.32.4
+hub-v57jl-master-1         Ready    control-plane,master   21h   v1.32.4
+hub-v57jl-master-2         Ready    control-plane,master   21h   v1.32.4
+hub-v57jl-store-1-wqqb7    Ready    infra,worker           17h   v1.32.4
+hub-v57jl-store-2-2hhjk    Ready    infra,worker           17h   v1.32.4
+hub-v57jl-store-3-q42r2    Ready    infra,worker           17h   v1.32.4
+hub-v57jl-worker-0-99mcp   Ready    worker                 21h   v1.32.4
+hub-v57jl-worker-0-h94nj   Ready    worker                 21h   v1.32.4
 ```
 
+* Capture state of node before changes
+
+```bash
+TEST_WORKER=hub-v57jl-worker-0-h94nj
+mkdir $TEST_WORKER
+oc get node $TEST_WORKER -o yaml > $TEST_WORKER/node-before.yaml
+```
 
 ```
 oc get mcp
 NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-fe3cb1c0f79e5d3fabf5de4c6b422f2e             True      False      False      3              3                   3                     0                      10d
-worker             rendered-worker-8ecca25a0517779ecf6829f69f66501a             True      False      False      2              2                   2                     0                      10d
-worker-automount   rendered-worker-automount-6312015e2cef0f99c445d816e90af80b   True      False      False      0              0                   0                     0                      18m
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      21h
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      21h
+worker-automount   rendered-worker-automount-5e9c2b6c99680f8581b1a2b42de1795c   True      False      False      0              0                   0                     0                      11h
 ```
 
 * Adjust the node-role.kubernetes.io label on the test nodes so they will be configured by the worker-auomount pool which applies the automount configs and the layered image.
 
 ```bash
-oc label node worker-5 node-role.kubernetes.io/worker- node-role.kubernetes.io/worker-automount=''
+TEST_WORKER=hub-v57jl-worker-0-99mcp
+oc label node $TEST_WORKER node-role.kubernetes.io/worker- node-role.kubernetes.io/worker-automount=''
+
 
 oc get mcp
 NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-fe3cb1c0f79e5d3fabf5de4c6b422f2e             True      False      False      3              3                   3                     0                      10d
-worker             rendered-worker-8ecca25a0517779ecf6829f69f66501a             True      False      False      1              1                   1                     0                      10d
-worker-automount   rendered-worker-automount-6312015e2cef0f99c445d816e90af80b   False     False      False      1              0                   0                     0                      20m
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      21h
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      5              5                   5                     0                      21h
+worker-automount   rendered-worker-automount-5e9c2b6c99680f8581b1a2b42de1795c   False     False      False      1              0                   0                     0                      11h
 ```
 
 * Notice there is 1 mahcine in the worker-automount MCP. Un pause the MCP
@@ -308,37 +274,11 @@ oc patch machineconfigpool/worker-automount \
 * Begin watching the MCD logs in another terminal
 
 ```bash
-oc get pods -n openshift-machine-config-operator -o wide | grep worker-5
-kube-rbac-proxy-crio-worker-5                1/1     Running   5 (24m ago)   23m   192.168.4.205   worker-5   <none>           <none>
-machine-config-daemon-ht2wx                  2/2     Running   0             15m   192.168.4.205   worker-5   <none>           <none>
-machine-os-builder-58547b4fb9-fzcrr          1/1     Running   0             16m   10.129.2.12     worker-5   <none>           <none>
+ oc get pods -n openshift-machine-config-operator -o wide | grep $TEST_WORKER
+kube-rbac-proxy-crio-hub-v57jl-worker-0-h94nj                   1/1     Running   5 (21h ago)   21h     192.168.4.79    hub-v57jl-worker-0-h94nj   <none>           <none>
+machine-config-daemon-779hx                                     2/2     Running   1 (21h ago)   21h     192.168.4.79    hub-v57jl-worker-0-h94nj   <none>           <none>
 
-oc logs -n openshift-machine-config-operator machine-config-daemon-ht2wx -f
-```
-
-> [!IMPORTANT]
-> **FAILED**
->
-> * Log is in [worker-5/mcd.log](worker-5/mcd.log)
-> * Annotations in [worker-5/annotations-after-mcp-change.yaml](worker-5/annotations-after-mcp-change.yaml)
->
-> E0515 18:56:46.084164   14695 writer.go:226] Marking Degraded due to: "failed to update OS to image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310: error running rpm-ostree rebase --experimental ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310: error: Old and new refs are equal: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift/os-image@sha256:0b9ca241da2f41c03d2106c24ce9dee2370329771d7883508ddfc1d4712fc310\n: exit status 1"
-
-
-```bash
-oc get nodes
-ocNAME       STATUS                        ROLES                         AGE    VERSION
-master-1   Ready                         control-plane,master,worker   10d    v1.31.7
-master-2   Ready                         control-plane,master,worker   10d    v1.31.7
-master-3   Ready                         control-plane,master,worker   10d    v1.31.7
-worker-4   Ready                         worker                        10d    v1.31.7
-worker-5   NotReady,SchedulingDisabled   worker-automount              169m   v1.31.7
-
-oc get mcp
-NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-fe3cb1c0f79e5d3fabf5de4c6b422f2e             True      False      False      3              3                   3                     0                      10d
-worker             rendered-worker-8ecca25a0517779ecf6829f69f66501a             True      False      False      1              1                   1                     0                      10d
-worker-automount   rendered-worker-automount-6312015e2cef0f99c445d816e90af80b   False     True       True       1              0                   0                     1                      164m
+oc logs -n openshift-machine-config-operator machine-config-daemon-779hx -f
 ```
 
 # References
@@ -346,3 +286,8 @@ worker-automount   rendered-worker-automount-6312015e2cef0f99c445d816e90af80b   
 * https://access.redhat.com/solutions/4970731
 * https://access.redhat.com/solutions/5598401
 * https://redhat-internal.slack.com/archives/C02CZNQHGN8/p1747245572935239
+* https://issues.redhat.com//browse/OCPBUGS-53408
+* https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.1/x86_64/packages
+
+<!-- * Opened bug https://issues.redhat.com/browse/OCPBUGS-56279
+* Which seems to be this https://issues.redhat.com//browse/OCPBUGS-53408 -->
