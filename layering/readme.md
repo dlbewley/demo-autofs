@@ -122,7 +122,7 @@ oc create secret docker-registry push-secret \
 > [!NOTE]
 > Verify the expiration on the token just created:
 > `oc extract secret/push-secret -n openshift-machine-config-operator --to=- | jq -r '.auths."image-registry.openshift-image-registry.svc:5000".auth' | base64 -d | cut -d. -f2 | base64 -d`
-> # .dockerconfigjson
+> 
 > {"aud":["https://kubernetes.default.svc"],"exp":1809913549,"iat":1747705549,"iss":"https://kubernetes.default.svc","jti":"37ec3a2e-bdb1-4897-bc6d-c2d433b4f69f","kubernetes.io":{"namespace":"openshift-machine-config-operator","serviceaccount":{"name":"builder","uid":"7f114eb8-da6b-4be1-8bc4-6c9e9119a252"}},"nbf":1747705549,"sub":"system:serviceaccount:openshift-machine-config-operator:builder"}%
 > `date -r 1809913549`
 > Sun May  9 21:45:49 EDT 2027
