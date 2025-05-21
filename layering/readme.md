@@ -165,6 +165,15 @@ worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718   True      
 worker-automount                                                                                                                                                                      2s
 ```
 
+* Create the [machineconfigs](machineconfig.yaml) that configure autofs.
+
+```bash
+oc create -f machineconfig.yaml
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd-config created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs-service created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
+```
+
 > [!NOTE]
 > **Entitlements**
 >
@@ -206,14 +215,8 @@ Writing manifest to image destination
 + return 0
 ```
 
-* Create the [machineconfigs](machineconfig.yaml) that configure autofs.
-
-```bash
-oc create -f machineconfig.yaml
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd-config created
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs-service created
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
-```
+> [!NOTE]
+> Creating or modifying MachineConfigs will trigger a new MachineOSBuild.
 
 ## Apply Layered Image to Nodes
 
@@ -279,6 +282,22 @@ kube-rbac-proxy-crio-hub-v57jl-worker-0-h94nj                   1/1     Running 
 machine-config-daemon-779hx                                     2/2     Running   1 (21h ago)   21h     192.168.4.79    hub-v57jl-worker-0-h94nj   <none>           <none>
 
 oc logs -n openshift-machine-config-operator machine-config-daemon-779hx -f
+```
+
+# Test AutoFS
+
+```bash
+ssh core@$TEST_NODE
+sudo -i
+ls /home/dale
+[root@hub-v57jl-worker-0-99mcp ~]# journalctl -u autofs
+May 21 14:13:38 hub-v57jl-worker-0-99mcp systemd[1]: Starting Automounts filesystems on demand...
+May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: do_mount_autofs_indirect: failed to create autofs directory /home
+May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: handle_mounts: mount of /home failed!
+May 21 14:13:38 hub-v57jl-worker-0-99mcp systemd[1]: Started Automounts filesystems on demand.
+May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: umount_multi: symlink /home has the wrong device, possible race condition
+May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: umount_autofs_indirect:234: ioctl failed: Bad file descriptor
+May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: master_do_mount: failed to startup mount
 ```
 
 # References
