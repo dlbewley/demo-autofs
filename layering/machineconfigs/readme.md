@@ -1,5 +1,6 @@
 > [!WARNING]
 > **These MachineConfig resources are generated from Butane `*.bu` files.**
+>
 > Do not edit the MachineConfig `*.yaml` files directly.
 
 **Instructions:**
