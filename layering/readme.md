@@ -292,17 +292,19 @@ oc logs -n openshift-machine-config-operator machine-config-daemon-779hx -f
 # Test AutoFS
 
 ```bash
-ssh core@$TEST_NODE
-sudo -i
-ls /home/dale
-[root@hub-v57jl-worker-0-99mcp ~]# journalctl -u autofs
-May 21 14:13:38 hub-v57jl-worker-0-99mcp systemd[1]: Starting Automounts filesystems on demand...
-May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: do_mount_autofs_indirect: failed to create autofs directory /home
-May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: handle_mounts: mount of /home failed!
-May 21 14:13:38 hub-v57jl-worker-0-99mcp systemd[1]: Started Automounts filesystems on demand.
-May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: umount_multi: symlink /home has the wrong device, possible race condition
-May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: umount_autofs_indirect:234: ioctl failed: Bad file descriptor
-May 21 14:13:38 hub-v57jl-worker-0-99mcp automount[1842]: master_do_mount: failed to startup mount
+[root@hub-v57jl-worker-0-99mcp ~]# cat /etc/sssd/conf.d/homedir.conf
+override_homedir = /var/home/%u
+[root@hub-v57jl-worker-0-99mcp ~]# getent passwd dale
+dale:*:1001:1001:Dale:/home/dale:/bin/bash
+[root@hub-v57jl-worker-0-99mcp ~]# su - dale
+Last login: Thu May 22 13:21:58 UTC 2025 on pts/0
+[dale@hub-v57jl-worker-0-99mcp ~]$ id
+uid=1001(dale) gid=1001(dale) groups=1001(dale) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+[dale@hub-v57jl-worker-0-99mcp ~]$ pwd
+/home/dale
+[dale@hub-v57jl-worker-0-99mcp ~]$ df -h .
+Filesystem              Size  Used Avail Use% Mounted on
+nfs:/exports/home/dale   29G  1.8G   27G   7% /var/home/dale
 ```
 
 # References
