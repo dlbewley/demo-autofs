@@ -13,7 +13,7 @@ spec:
       files:
         - contents:
             compression: gzip
-            source: data:;base64,H4sIAAAAAAAC/4ySQUs7MRDF7/kUAz30/4dte1YIKHoRFDx4KyVMkqkbzSZLJlntxc8u6RZt2Ra8JJl5v3l5gayZ2W4EUxqcIQYJgbmBHrsGsOS4ZWFjhy5U6fH+9lnMLOnyqjwN5EHClRDrkVhVeSOcVX2Kg7OUQIK32AssuZ00Tdsj8zk2bqftuqiS3KG+Xq3qtvSol5o+PO2WgfJIMWEyrdLIBBKskR51Y40cuXr6QQ+XnU7EImu/iyXk5tL4bJ1izDfGOwoZvjazfazRCBbtvoLFJyz0n/xg/i/qNzL5ziPzL/+E/f/5SdYOezWiylQWJBzTJyyFnHYX6YltwG58/xmTd9qBBBPOSAP6QsfGD2EbU4fZxSAMmpaUSWQpZIe+JnhJhabf6DsAAP//58MH5IoCAAA=
+            source: data:;base64,H4sIAAAAAAAC/4ySz2rjMBDG73qKAR+yC4593oBgS3sptNBDbyGYsTSu1cqS0Uhuc+mzF8WhTXACvYzmz28+fQIV0BlLG6gpqpqZ9SFUyrtObHO6E0xhMooYJDjmEkYcSsAUfcdC+wGNy6OHu5snUWhq00tjaSILEv4JsZ2JOo93wuhmDH4ymgJIsBpHgSn2i6bqR2S+xPpu2c6hScEc601d56Oy2FYtvVvaV47iTDFhUH3TIhNI0EpabEut5Mzl7Bs9Xna+4ZPM/cEnF8tr68U2eB//K2vIRfjcFQdbsxCs+0MF6w9Yt7/Sg9Uf376SircWmX/4Rxz/rs68Djg2M9qozIKEU/qMJRfD/iq9kHU4zO+/IPJGe5Cg3IXRhDbRqfC963wYMBrvhELVU6MCaXLRoM0OnkOi5Tf6CgAA//+G8177pgIAAA==
           mode: 384
           path: /etc/sssd/sssd.conf
           user:
