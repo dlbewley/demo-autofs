@@ -1,0 +1,14 @@
+---
+# to build machineconfig
+# butane -d ../scripts < 99-worker-automount-nfs-homedir-setsebool.bu > 99-worker-automount-nfs-homedir-setsebool.yam
+variant: openshift
+version: 4.18.0
+metadata:
+  name: 99-worker-automount-nfs-homedir-setsebool
+  labels:
+    machineconfiguration.openshift.io/role: worker-automount
+systemd:
+  units:
+    - name: setsebool-nfs-home.service
+      enabled: true
+      contents_local: setsebool-nfs-home.service

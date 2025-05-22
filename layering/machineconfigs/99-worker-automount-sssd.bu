@@ -1,0 +1,30 @@
+---
+# to build machineconfig
+# butane -d scripts < machineconfig-sssd.bu > 99-worker-automount-sssd.yaml
+variant: openshift
+version: 4.18.0
+metadata:
+  name: 99-worker-automount-sssd
+  labels:
+    machineconfiguration.openshift.io/role: worker-automount
+systemd:
+  # sssd is already enabled, but is conditioned on the presence of the sssd.conf file
+  # enable again for good measure
+  units:
+    - name: sssd.service
+      enabled: true
+storage:
+  # this does not exist by default
+  files:
+    - path: /etc/sssd/sssd.conf
+      contents:
+        local: sssd.conf
+      user:
+        name: root
+      mode: 0600
+    - path: /etc/sssd/conf.d/homedir.conf
+      contents:
+        local: homedir.conf
+      user:
+        name: root
+      mode: 0600
