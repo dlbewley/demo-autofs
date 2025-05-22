@@ -165,10 +165,15 @@ worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718   True      
 worker-automount                                                                                                                                                                      2s
 ```
 
-* Create the [machineconfigs](machineconfig.yaml) that configure autofs.
+
+* Ensure that [machineconfigs](machineconfigs/) and included [scripts](scripts/) are up to date.
+
+* Adjust the role label in the [kustomization.yaml](machineconfigs/kustomization.yaml) if necessary.
+
+* Apply all of the [machineconfigs](machineconfigs/kustomization.yaml) using kustomize or just `oc apply` the individual YAMLs.
 
 ```bash
-oc create -f machineconfig.yaml
+oc apply -k machineconfigs
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd-config created
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs-service created
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
