@@ -1,4 +1,10 @@
-These MachineConfig resources are generated from Butane files.
+> [!WARNING]
+> **These MachineConfig resources are generated from Butane `*.bu` files.**
+> Do not edit the MachineConfig `*.yaml` files directly.
 
-Do not edit the MachineConfig YAMLs directly.
-Make any required changes to the `*.bu` files and to any included [scripts](../scripts/) instead, and run `make` to generate the new YAMLs.
+**Instructions:**
+
+* Make any required changes to the `*.bu` files.
+* Make any required changes to the included [scripts](../scripts/).
+* Run `make` to generate the new MachineConifg YAMLs.
+* `oc apply -k .` them or let ArgoCD take the wheel.
