@@ -38,8 +38,6 @@ runcmd:
   # copy sssd config from configmap
   - [cp, /opt/sssd.conf, /etc/sssd/sssd.conf]
   - [chmod, 600, /etc/sssd/sssd.conf]
-  - [cp, /opt/homedir.conf, /etc/sssd/conf.d/homedir.conf]
-  - [chmod, 600, /etc/sssd/conf.d/homedir.conf]
   - [systemctl, daemon-reload]
   - [systemctl, enable, sssd.service]
   - [systemctl, start, sssd.service]
@@ -54,6 +52,5 @@ runcmd:
   # fix up ssh for the local cloud-user and automount users
   - [semanage, fcontext, -a, -t, home_root_t, "/local/home/[^/]+"]
   - [semanage, fcontext, -a, -t, ssh_home_t, "/local/home/[^/]+/.ssh(/.*)?"]
-  - [restorecon, -Rv, /local/home]
-  - [restorecon, -Rv, /local/home/*/.ssh]
   - [setsebool, -P, use_nfs_home_dirs, true]
+  - [restorecon, -Rv, /local/home]

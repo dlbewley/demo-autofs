@@ -1,0 +1,22 @@
+---
+# to build machineconfig
+# butane -d ../scripts < 99-worker-automount-autofs.bu > 99-worker-automount-autofs.yaml
+variant: openshift
+version: 4.18.0
+metadata:
+  name: 99-worker-automount-autofs
+  labels:
+    machineconfiguration.openshift.io/role: worker-automount
+systemd:
+  units:
+    - name: autofs.service
+      enabled: true
+storage:
+  # this does not exist by default
+  files:
+    - path: /etc/auto.master.d/auto.home
+      contents:
+        local: auto.home
+      user:
+        name: root
+      mode: 0600

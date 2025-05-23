@@ -1,0 +1,40 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineOSConfig
+metadata:
+  name: worker-automount
+spec:
+  machineConfigPool:
+    name: worker-automount
+  containerFile: 
+  - content: |-
+      FROM configs AS final
+      LABEL layered-source="https://github.com/dbewley/demo-autofs"
+      RUN dnf install -y \
+        autofs \
+        libsss_autofs \
+        openldap-clients \
+        && dnf clean all \
+        && ostree container commit
+  imageBuilder: 
+    imageBuilderType: Job
+  # MCO uses to pull the base operating system image from the registry
+  # i think this should be a combination of the global pull secret and the "push-secret" - DEBUG
+  baseImagePullSecret: 
+    # baseImagePullSecret is the secret used to pull the base image.
+    # Must live in the openshift-machine-config-operator namespace if provided.
+    # Defaults to using the cluster-wide pull secret if not specified. This is
+    # provided during install time of the cluster, and lives in the
+    # openshift-config namespace as a secret.
+    name: pull-and-push-secret
+  renderedImagePushSecret: 
+    # renderedImagePushSecret is the secret used to connect to a user registry.
+    # The final image push and pull secrets should be separate and assume the
+    # principal of least privilege.
+    # The push secret with write privilege is only required to be present on the
+    # node hosting the MachineConfigController pod.
+    # The pull secret with read only privileges is required on all nodes.
+    # By separating the two secrets, the risk of write credentials becoming
+    # compromised is reduced.
+    # a copy of openshift-config:secret/builder-dockercfg-5dsjz
+    name: push-secret
+  renderedImagePushSpec: image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image:latest 

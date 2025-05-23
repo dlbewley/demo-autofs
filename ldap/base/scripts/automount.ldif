@@ -11,19 +11,27 @@ objectClass: top
 objectClass: automountMap
 ou: auto.master
 
+# RHEL mount point
 dn: cn=/home,ou=auto.master,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
 cn: /home
-# automountInformation: ldap:ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
-# This tells autofs (via SSSD) to look for a map named 'auto.home' for /home paths
 automountInformation: auto.home -rw,soft,intr
 
+# CoreOS mount point
+dn: cn=/var/home,ou=auto.master,ou=automount,dc=lab,dc=bewley,dc=net
+objectClass: top
+objectClass: automount
+cn: /var/home
+automountInformation: auto.home -rw,soft,intr
+
+## Single Automount Map for both RHEL and CoreOS
 dn: ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automountMap
 ou: auto.home
 
+# User entries
 dn: cn=dale,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
@@ -42,9 +50,7 @@ objectClass: automount
 cn: remy
 automountInformation: -fstype=nfs4 nfs:/exports/home/remy
 
-# Wildcard entry for other users in auto.home (less specific, processed after specific entries)
-# The ampersand (&) is replaced by the key (the username)
-# untested
+# Wildcard entry for other users
 dn: cn=*,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount

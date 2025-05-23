@@ -1,0 +1,1 @@
+This will mont a nfs volume statically. If the path can be looked up from LDAP ahead of time this avoids automount all together. This should be done in a privileged init container instead of in the app container.

@@ -1,0 +1,11 @@
+# one shot systemd unit to cause SELinux to permit the use of NFS home dirs
+[Unit]
+Description=Set SELinux boolean use_nfs_home_dirs
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/setsebool -P use_nfs_home_dirs 1
+
+[Install]
+WantedBy=multi-user.target

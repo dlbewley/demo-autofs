@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-automount
+
+images:
+  - name: quay.io/dbewley/autofs
+    newName: quay.io/dbewley/autofs
+    newTag: v4.18
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: automount-conf
+    files:
+      - scripts/extra.autofs
+      - scripts/auto.home
+
+   # configmap is only created for reference not used
+   # it is applied via MCO directly
+   # probably to be removed in a future release
+   # it was not necessary for passwd lookups. adding in as testing of autofs proceeeds
+  - name: sssd-conf
+    files:
+      - scripts/sssd.conf
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - role.yaml
+  - rolebinding.yaml
+  - daemonset.yaml

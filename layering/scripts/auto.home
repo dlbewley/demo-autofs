@@ -1,0 +1,3 @@
+# file: /etc/auto.master.d/auto.home
+# look up home dirs within /var/home via the auto.varhome indirect map in LDAP
+/var/home       auto.varhome

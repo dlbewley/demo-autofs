@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: automount
+spec:
+  selector:
+    matchLabels:
+      app: automount
+  template:
+    metadata:
+      labels:
+        app: automount
+    spec:
+      # only run on test nodes
+      nodeSelector:
+        demo: automount
+      serviceAccountName: automount
+      hostPID: true
+      hostNetwork: true
+      containers:
+        - name: automount
+          image: quay.io/dbewley/autofs:v4.18
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          command:
+            - automount
+            - --force
+            - --foreground
+            - --timeout
+            - "0"
+            - --dont-check-daemon
+            - --debug
+            - --verbose
+          volumeMounts:
+            - name: sssd-conf
+              mountPath: /etc/sssd/sssd.conf
+              subPath: sssd.conf
+            - name: lib-sssd
+              mountPath: /var/lib/sss
+
+            # works without this, but sssd-client is installed in the image
+            # - name: lib64-sssd
+            #   mountPath: /lib64/sssd
+
+            # these allow sss via files lookup, but without these ldap is not used
+            - name: automount-conf
+              mountPath: /etc/auto.master.d/extra.autofs
+              subPath: extra.autofs
+            - name: automount-conf
+              mountPath: /etc/auto.home
+              subPath: auto.home
+
+            - name: var-cache
+              mountPath: /var/cache
+
+            # mount does not show up a /home
+            - name: home
+              mountPath: /home
+              # Bidirectional mount propagation is required
+              mountPropagation: Bidirectional
+              # [root@worker-5 sbin]# mount |grep nfs
+              # nfs.lab.bewley.net:/exports/home/dale on /var/lib/kubelet/pods/7db5596b-8538-49f9-81d8-21a530af0b37/volumes/kubernetes.io~nfs/nfs-home-volume type nfs4 (ro,relatime,vers=4.2,rsize=262144,wsize=262144,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.4.205,local_lock=none,addr=192.168.4.120)
+
+            - name: mnt
+              mountPath: /mnt
+              # Bidirectional mount propagation is required
+              mountPropagation: Bidirectional
+
+      volumes:
+        # nsswitch.conf already looks ok. must we mount it though?
+        - name: lib-sssd
+          hostPath:
+            path: /var/lib/sss
+
+        - name: var-cache
+          hostPath:
+            path: /var/cache
+
+        - name: sssd-conf
+          configMap:
+            name: sssd-conf
+
+        - name: automount-conf
+          configMap:
+            name: automount-conf
+
+        - name: mnt
+          hostPath:
+            path: /var/mnt
+
+        - name: home
+          hostPath:
+            path: /var/home
