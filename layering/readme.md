@@ -1,19 +1,16 @@
 # Using CoreOS Image Layering to run automountd
 
-RHEL CoreOS is a container optimized operating system distributed via a container image. Typically one does not install software directly into the host operating system, but instead runs services via containers.
+RHEL CoreOS is a container optimized operating system which is distributed via a container image. Typically one does not install software directly into the host operating system, but instead from pulled images running in containers.
 
 The [RHCOS Image Layering](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/machine_configuration/mco-coreos-layering) feature of OpenShift allows to the ability to install software at the host level in a manner compatible with the automated node lifecycle management performed by OpenShift.
 
-[internal deck](https://docs.google.com/presentation/d/14rIn35xjR8cptqzYwDoFO6IOWIUNkSBZG3K2-5WJKok/edit?slide=id.g547716335e_0_220#slide=id.g547716335e_0_220)
-
-
-Draft docs:
-
-* https://issues.redhat.com/browse/OSDOCS-13346
-* https://87486--ocpdocs-pr.netlify.app/openshift-enterprise/latest/machine_configuration/mco-coreos-layering.html
-
 > [!IMPORTANT]
 > On cluster image layering is TP as of 4.18 and anticipated to GA in 4.19.
+>
+> Draft 4.19 docs:
+>
+> * https://issues.redhat.com/browse/OSDOCS-13346
+> * https://87486--ocpdocs-pr.netlify.app/openshift-enterprise/latest/machine_configuration/mco-coreos-layering.html
 
 > [!WARNING]
 > Use of image layering will lead to potentially unanticipated reboots when the CA signing cert is rotated and subsequently removed. This occurs at 80% and 100% of the cert lifetime.
@@ -45,7 +42,7 @@ the push and pull secrets to use
 
 ### OpenShift 4.19
 
-* Testing on 4.18 with TP feature enabled was not successful.
+* Testing on 4.18.10 with TP feature enabled was not successful.
 * Tested using OpenShift 4.19rc2 on 2025-05-20
 
 ### Image Registry to hold layered image
@@ -314,6 +311,8 @@ nfs:/exports/home/dale   29G  1.8G   27G   7% /var/home/dale
 * https://redhat-internal.slack.com/archives/C02CZNQHGN8/p1747245572935239
 * https://issues.redhat.com//browse/OCPBUGS-53408
 * https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.1/x86_64/packages
+* [internal deck](https://docs.google.com/presentation/d/14rIn35xjR8cptqzYwDoFO6IOWIUNkSBZG3K2-5WJKok/edit?slide=id.g547716335e_0_220#slide=id.g547716335e_0_220)
+* [RHCOS Image Layering 4.18 docs](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/machine_configuration/mco-coreos-layering) 
 
 <!-- * Opened bug https://issues.redhat.com/browse/OCPBUGS-56279
 * Which seems to be this https://issues.redhat.com//browse/OCPBUGS-53408 -->
