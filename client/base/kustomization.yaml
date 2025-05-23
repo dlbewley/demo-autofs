@@ -19,6 +19,7 @@ configMapGenerator:
   - name: sssd-conf
     files:
       - scripts/sssd.conf
+      - scripts/homedir.conf
 
 secretGenerator:
   - name: cloudinitdisk-client
