@@ -41,14 +41,13 @@ runcmd:
   - [chmod, "600", /etc/sssd/sssd.conf]
   - [cp, /opt/homedir.conf, /etc/sssd/conf.d/homedir.conf]
   - [chmod, "600", /etc/sssd/conf.d/homedir.conf]
-  # - [cp, /opt/wait-for-ssh.sh, /etc/cloud/cloud-init.d/restore-home-labels.cfg]
-  # - [chmod, "755", /etc/cloud/cloud-init.d/restore-home-labels.cfg]
 
   - [systemctl, daemon-reload]
   - [systemctl, enable, sssd.service]
   - [systemctl, start, sssd.service]
   - [systemctl, enable, autofs.service]
   - [systemctl, start, autofs.service]
+
   # check automounts
   - [automount, -m]
   # echo nsswitch configs
