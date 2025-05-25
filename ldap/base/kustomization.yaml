@@ -21,6 +21,7 @@ configMapGenerator:
       - scripts/autofs.ldif
       - scripts/automount.ldif
       - scripts/base.ldif
+      - scripts/ldap-load.sh
       - scripts/modify-suffix.ldif
       - scripts/set-rootdn.ldif
       - scripts/users.ldif
