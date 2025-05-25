@@ -16,14 +16,14 @@ dn: cn=/home,ou=auto.master,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
 cn: /home
-automountInformation: auto.home -rw,soft,intr
+automountInformation: auto.home -fstype=nfs4,rw,soft,timeo=100,retrans=3
 
 # CoreOS mount point
 dn: cn=/var/home,ou=auto.master,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
 cn: /var/home
-automountInformation: auto.home -rw,soft,intr
+automountInformation: auto.home -fstype=nfs4,rw,soft,timeo=100,retrans=3
 
 ## Single Automount Map for both RHEL and CoreOS
 dn: ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
@@ -36,19 +36,19 @@ dn: cn=dale,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
 cn: dale
-automountInformation: -fstype=nfs4 nfs:/exports/home/dale
+automountInformation: nfs:/exports/home/dale
 
 dn: cn=jill,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
 cn: jill
-automountInformation: -fstype=nfs4 nfs:/exports/home/jill
+automountInformation: nfs:/exports/home/jill
 
 dn: cn=remy,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net
 objectClass: top
 objectClass: automount
 cn: remy
-automountInformation: -fstype=nfs4 nfs:/exports/home/remy
+automountInformation: nfs:/exports/home/remy
 
 # Wildcard entry for other users
 dn: cn=*,ou=auto.home,ou=automount,dc=lab,dc=bewley,dc=net

@@ -10,6 +10,14 @@ users:
     # local
     passwd: $y$j9T$hpEP7mxg5d5Ys3R3CqB8R.$qvhmcXLcqmqwXA6GV0MnVHyuHf1VMVDulNSFOF76Ge3
 
+  - name: dale
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcYGv4QhrNhDB9ahXEp2x6kn9YZ2RV5GEXcRRYvk4yLpFidvSFJxkE3AonLuOgi7WBVwMofCCWbHDEgBIWNv6RzR41gKQYI+ZgcT5bSZ9ZFhkkgBvTE66q0XyFXYeON+QV1Woxb7FDDmkvpMi9Sp32EMLOaSQwgnWCsI00zmUgM4UYy66UatWqSRaPtLe8ES2IqA/WUcRfxexcFjtS6jsn2R3Xyz+w9IpexWMhTjWmKpH97Ps8Sj61pCgGgMkkvuBDWBhnVy58Hf0tNg2YZnILCUdh0vVZ1LWPpsno2HB+gBzNhJZznSC5x+emUKtpQwOzrdFn51h1ZCEQDAmyZ+Vb acm@bunny
+    uid: 1001
+    groups: wheel
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: true
+
 rh_subscription:
   org: 00000000
   activation-key: EXAMPLE
@@ -27,24 +35,19 @@ packages:
 mounts:
   - [ /dev/disk/by-id/virtio-sssd-conf, /opt, iso9660, 'defaults' ]
 
-# tested values
-#[root@client log]# grep -E '^(passwd|shadow|group|automount)' /etc/nsswitch.conf
-#passwd:     sss files systemd
-#shadow:     files
-#group:      sss files systemd
-#automount:  files sss
-
 runcmd:
   # copy sssd config from configmap
   - [cp, /opt/sssd.conf, /etc/sssd/sssd.conf]
-  - [chmod, 600, /etc/sssd/sssd.conf]
+  - [chmod, "600", /etc/sssd/sssd.conf]
   - [cp, /opt/homedir.conf, /etc/sssd/conf.d/homedir.conf]
-  - [chmod, 600, /etc/sssd/conf.d/homedir.conf]
+  - [chmod, "600", /etc/sssd/conf.d/homedir.conf]
+
   - [systemctl, daemon-reload]
   - [systemctl, enable, sssd.service]
   - [systemctl, start, sssd.service]
   - [systemctl, enable, autofs.service]
   - [systemctl, start, autofs.service]
+
   # check automounts
   - [automount, -m]
   # echo nsswitch configs
@@ -52,8 +55,11 @@ runcmd:
   # confirm sssd lookup from ldap
   - [getent, passwd, dale]
   # fix up ssh for the local cloud-user and automount users
+  - [setsebool, -P, use_nfs_home_dirs, "true"]
   - [semanage, fcontext, -a, -t, home_root_t, "/local/home/[^/]+"]
   - [semanage, fcontext, -a, -t, ssh_home_t, "/local/home/[^/]+/.ssh(/.*)?"]
-  - [restorecon, -Rv, /local/home]
-  - [restorecon, -Rv, /local/home/*/.ssh]
-  - [setsebool, -P, use_nfs_home_dirs, true]
+  # does not work
+  # can not login as cloud-user and can not sudo as dale. did this restorecon not run late enough?
+  - [restorecon, -R, -v, /local/home]
+  # will be fixed by a reboot
+  - [touch, /.autorelabel]
