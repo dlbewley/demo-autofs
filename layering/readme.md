@@ -447,9 +447,8 @@ homedir.conf
 reboot
 ```
 
-After this, the node `$TEST_WORKER` reboots and begins running a custom image with autofs installed and configured.
 
-### Debug 2025-05-26
+### Debug Failed MCP Update 2025-05-26
 
 ```bash
 [root@hub-v57jl-worker-0-dn4tm ~]# rpm-ostree status -v
@@ -531,6 +530,8 @@ Writing manifest to image destination
 ```
 
 # Testing AutoFS
+
+After above is successful, `$TEST_WORKER` reboots and begins running a custom image with autofs installed and configured.
 
 > [!NOTE]
 > These results are from 05-22-25 when everything worked.
