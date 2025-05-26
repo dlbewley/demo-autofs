@@ -449,6 +449,87 @@ reboot
 
 After this, the node `$TEST_WORKER` reboots and begins running a custom image with autofs installed and configured.
 
+### Debug 2025-05-26
+
+```bash
+[root@hub-v57jl-worker-0-dn4tm ~]# rpm-ostree status -v
+State: busy
+AutomaticUpdates: disabled
+Transaction: rebase --experimental 'ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:a18f86073faf0659cfdf8753a2dc0697126515c264b2ce7da2a3b3b6f9931f7e'
+
+  Initiator: client(id:machine-config-operator dbus:1.8151 unit:crio-8ce30d46daaa44c80724020560851c8077761590c768e7fab07a38897a1ac296.scope uid:0)
+Deployments:
+● ostree-unverified-registry:quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526 (index: 0)
+                   Digest: sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526
+                  Version: 9.6.20250514-0 (2025-05-14T23:44:17Z)
+                   Commit: c59fb73267cf3c6c6c44813dd3238888b9c500c8f7bee9521126079f6d455c29
+                   Staged: no
+                StateRoot: rhcos
+
+# Pulling with /var/lib/kubelet/config.json does not work but /etc/mco/internal-registry-pull-secret.json does
+[root@hub-v57jl-worker-0-dn4tm mco]# podman pull --authfile /etc/mco/internal-registry-pull-secret.json image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:a18f86073faf0659cfdf8753a2dc0697126515c264b2ce7da2a3b3b6f9931f7e
+Trying to pull image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:a18f86073faf0659cfdf8753a2dc0697126515c264b2ce7da2a3b3b6f9931f7e...
+Getting image source signatures
+Copying blob 8552e7a85c92 skipped: already exists
+Copying blob 71721122e569 skipped: already exists
+Copying blob 13e28b74b412 skipped: already exists
+Copying blob 2616319dd0b6 skipped: already exists
+Copying blob f76bdafcae74 skipped: already exists
+Copying blob 9ad3fd294b52 skipped: already exists
+Copying blob 9b13a23c869f skipped: already exists
+Copying blob 57efe3163425 skipped: already exists
+Copying blob 1c21b7fdab24 skipped: already exists
+Copying blob c77168d99d3c skipped: already exists
+Copying blob c0edf73ad374 skipped: already exists
+Copying blob d72350910969 skipped: already exists
+Copying blob a7d8055279dc skipped: already exists
+Copying blob dbe6e35d1324 skipped: already exists
+Copying blob 86dd130c82b8 skipped: already exists
+Copying blob 43dfcb10b34f skipped: already exists
+Copying blob 7b090b813be3 skipped: already exists
+Copying blob 00baa96f6230 skipped: already exists
+Copying blob 74ad4e117528 skipped: already exists
+Copying blob 548bb8e38df2 skipped: already exists
+Copying blob 33ed4bd82eee skipped: already exists
+Copying blob 9d30772dfd48 skipped: already exists
+Copying blob 4696487faff7 skipped: already exists
+Copying blob e12bf279c043 skipped: already exists
+Copying blob 24abc80a6dbf skipped: already exists
+Copying blob f65b36dff745 skipped: already exists
+Copying blob f2dd23180414 skipped: already exists
+Copying blob f73207ff9240 skipped: already exists
+Copying blob 8b62e111a9b7 skipped: already exists
+Copying blob cb319d70da5e skipped: already exists
+Copying blob 00e24dc97786 skipped: already exists
+Copying blob 99b100f4aa2f skipped: already exists
+Copying blob cbc00d7179ab skipped: already exists
+Copying blob 5479e2bbc9cb skipped: already exists
+Copying blob 251b5f43edf7 skipped: already exists
+Copying blob bd7b3c980c8f skipped: already exists
+Copying blob 91982cedf9c2 skipped: already exists
+Copying blob 48844b90a6c9 skipped: already exists
+Copying blob 2a34404056f8 skipped: already exists
+Copying blob 595813649d13 skipped: already exists
+Copying blob f26f793252f5 skipped: already exists
+Copying blob 8e8e44669fd1 skipped: already exists
+Copying blob c639dcdae0ff skipped: already exists
+Copying blob 3202adf0a72b skipped: already exists
+Copying blob 176cfcfdcfdb skipped: already exists
+Copying blob 082f42ad8236 skipped: already exists
+Copying blob c1a31ba9dbc7 skipped: already exists
+Copying blob 0c9fb1e1605c skipped: already exists
+Copying blob c0f983ada380 skipped: already exists
+Copying blob 256c087f65fc skipped: already exists
+Copying blob ad312c5c40cc skipped: already exists
+Copying blob 3cefea365c61 skipped: already exists
+Copying blob 1e8bd20f9c81 skipped: already exists
+Copying blob 1f51303d225d done   |
+Copying blob 5d877c30355f done   |
+Copying config 54c58bb1b7 done   |
+Writing manifest to image destination
+54c58bb1b721d0dd10ca19b8948972b11c6f5c0c30b627fd16525dcfe65ac314
+```
+
 # Testing AutoFS
 
 > [!NOTE]
