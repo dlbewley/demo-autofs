@@ -428,6 +428,7 @@ E0525 20:24:47.976850 3459 writer.go:226] Marking Degraded due to: "error enabli
 
 > [!WARNING]
 > This worked last week, but after re-doing everying as above I'm stuck.
+> New issue https://issues.redhat.com/browse/OCPBUGS-56648
 
 ```
 [root@hub-v57jl-worker-0-8thc7 etc]# rpm-ostree status
