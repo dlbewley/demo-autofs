@@ -445,10 +445,13 @@ conf.d  pki  sssd.conf
 homedir.conf
 
 reboot
+# after this br-ex is missing. removed node and started again with hub-v57jl-worker-0-dn4tm
 ```
 
 
 ### Debug Failed MCP Update 2025-05-26
+
+Machineconfig seems to apply (i.e. /etc/sssd/conf.d/homedir.conf was written) but OS Image does not apply.
 
 ```bash
 [root@hub-v57jl-worker-0-dn4tm ~]# rpm-ostree status -v
