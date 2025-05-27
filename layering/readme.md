@@ -41,7 +41,7 @@ To apply a custom layered image to your cluster by using the on-cluster build pr
 
 ### OpenShift 4.19
 
-* ✅ Testing on OpenShift 4.19rc2 MachineOSConfig v1 was successful. 
+* ✅ Testing on OpenShift 4.19rc2 MachineOSConfig v1 was successful. (Until [it wasn't](https://issues.redhat.com/browse/OCPBUGS-56648))
 * ❌ Testing on OpenShift 4.18.10 MachineOSConfig v1alpha1 was not successful.
 
 ### Provision Image Registry to hold layered image
