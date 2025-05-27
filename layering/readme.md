@@ -355,7 +355,6 @@ hub-v57jl-worker-0-8thc7   Ready,SchedulingDisabled   worker-automount   3h32m  
 * Begin watching the Machine Config Daemon logs for this node in another terminal
 
 ```bash
-      0                     0                      3h15m
 oc get pods -n openshift-machine-config-operator -o wide | grep $TEST_WORKER
 kube-rbac-proxy-crio-hub-v57jl-worker-0-8thc7   1/1     Running   2 (3h31m ago)   3h30m   192.168.4.148   hub-v57jl-worker-0-8thc7   <none>           <none>
 machine-config-daemon-bwq89                     2/2     Running   0               3h30m   192.168.4.148   hub-v57jl-worker-0-8thc7   <none>           <none>
@@ -452,6 +451,8 @@ reboot
 ### Debug Failed MCP Update 2025-05-26
 
 Machineconfig seems to apply (i.e. /etc/sssd/conf.d/homedir.conf was written) but OS Image does not apply.
+
+* [Full node MCD log](./hub-v57jl-worker-0-dn4tm.mcd.log)
 
 ```bash
 [root@hub-v57jl-worker-0-dn4tm ~]# rpm-ostree status -v
