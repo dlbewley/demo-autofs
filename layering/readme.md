@@ -32,10 +32,10 @@ Note the following limitations when working with the on-cluster layering feature
 To apply a custom layered image to your cluster by using the on-cluster build process, make a MachineOSConfig custom resource (CR) that specifies the following parameters:
 
 * One `MachineOSConfig` resource per machine config pool specifies:
-** the Containerfile to build
-** the machine config pool to associate the build
-** where the final image should be pushed and pulled from
-** the push and pull secrets to use with the image
+  * the Containerfile to build
+  * the machine config pool to associate the build
+  * where the final image should be pushed and pulled from
+  * the push and pull secrets to use with the image
 
 ## Prerequisites
 
