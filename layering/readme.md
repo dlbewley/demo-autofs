@@ -27,7 +27,7 @@ Note the following limitations when working with the on-cluster layering feature
     * Removing mirroring rules from ICSP, ITMS, and IDMS objects
     * Changing the trusted CA, by updating the user-ca-bundle configmap in the openshift-config namespace
 
-## Overview 
+# Overview 
 
 To apply a custom layered image to your cluster by using the on-cluster build process, make a MachineOSConfig custom resource (CR) that specifies the following parameters:
 
@@ -37,14 +37,14 @@ To apply a custom layered image to your cluster by using the on-cluster build pr
   * where the final image should be pushed and pulled from
   * the push and pull secrets to use with the image
 
-## Prerequisites
+# Prerequisites
 
-### OpenShift 4.19
+## OpenShift 4.19
 
-* ✅ Testing on OpenShift 4.19rc2 MachineOSConfig v1 was successful. (Until [it wasn't](https://issues.redhat.com/browse/OCPBUGS-56648))
+* ✅ Testing on OpenShift 4.19rc2 MachineOSConfig v1 was successful. (Caveat [this bug](https://issues.redhat.com/browse/OCPBUGS-56648))
 * ❌ Testing on OpenShift 4.18.10 MachineOSConfig v1alpha1 was not successful.
 
-### Provision Image Registry to hold layered image
+## Provision Image Registry to hold layered image
 
 Identify a registry or [enable the on-cluster registry](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/registry/setting-up-and-configuring-the-registry#configuring-registry-storage-baremetal)
 
@@ -95,7 +95,7 @@ $ oc patch configs.imageregistry.operator.openshift.io/cluster \
     --patch '{"spec":{"defaultRoute":true}}' --type=merge
 ```
 
-### Pull and Push Secrets
+## Pull and Push Secrets
 
 Create a pull-secret with the ability to push to the cluster image registry in the `openshift-machine-config-operator` namespace. 
 
@@ -184,6 +184,8 @@ renderedImagePushSecret:
   name: push-secret
 ```
 
+# Deployment
+
 ## Build Configs and Layered Image
 
 This machineconfig is associated with the just created `worker-automount` machine config pool.
@@ -200,26 +202,6 @@ worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718   True      
 worker-automount                                                                                                                                                                      5s
 ```
 
-> [!IMPORTANT]
-> CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
-
-* Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary.
-
-```bash
-cd machineconfigs
-make
-```
-
-* Adjust the role label in the [kustomization.yaml](machineconfigs/kustomization.yaml) if necessary to match the desired machineconfigpool (_worker-automount_).
-
-* Apply all of the [machineconfigs](machineconfigs/kustomization.yaml) using kustomize or just `oc apply` the individual YAMLs.
-
-```bash
-oc apply -k machineconfigs
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs created
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
-```
 
 > [!NOTE]
 > **Entitlements**
@@ -425,30 +407,44 @@ E0525 20:24:47.976850 3459 writer.go:226] Marking Degraded due to: "error enabli
 ...
 ```
 
+## Use MachineConfigs to Configure and Enable Automountd
+
+>[!NOTE]
+> I have not _yet_ tested the workaround described in the following warning, but it _should_ work.
+
 > [!WARNING]
-> This worked last week, but after re-doing everying as above I'm stuck.
-> New issue https://issues.redhat.com/browse/OCPBUGS-56648
+> **Do not apply the MachineConfigs until _after_ the node is running the new image.**
+>
+> * https://issues.redhat.com/browse/OCPBUGS-56648
+> _This will have implications on attempting to add any nodes to the MachineConfigPool later._
 
-```
-[root@hub-v57jl-worker-0-8thc7 etc]# rpm-ostree status
-State: idle
-Deployments:
-● ostree-unverified-registry:quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526
-                   Digest: sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526
-                  Version: 9.6.20250514-0 (2025-05-14T23:44:17Z)
-[root@hub-v57jl-worker-0-8thc7 etc]# rpm -q autofs
-package autofs is not installed
-[root@hub-v57jl-worker-0-8thc7 etc]# ls sssd
-conf.d  pki  sssd.conf
-[root@hub-v57jl-worker-0-8thc7 etc]# ls sssd/conf.d
-homedir.conf
+Use a MachineConfig resource to enable autofs and apply necessary configuration files to the nodes.
 
-reboot
-# after this br-ex is missing. removed node and started again with hub-v57jl-worker-0-dn4tm
+> [!IMPORTANT]
+> CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
+
+* Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary.
+
+```bash
+cd machineconfigs
+make
 ```
 
+* Adjust the role label in the [kustomization.yaml](machineconfigs/kustomization.yaml) if necessary to match the desired machineconfigpool (_worker-automount_).
 
-### Debug Failed MCP Update 2025-05-26
+* Apply all of the [machineconfigs](machineconfigs/kustomization.yaml) using kustomize or just `oc apply` the individual YAMLs.
+
+```bash
+oc apply -k machineconfigs
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
+```
+
+* This will cause another reboot of the node as the MachineConfigPool is updated.
+
+# Debugging
+## Debug Failed MCP Update 2025-05-26
 
 Machineconfig seems to apply (i.e. /etc/sssd/conf.d/homedir.conf was written) but OS Image does not apply.
 
@@ -584,6 +580,7 @@ oc delete secret/pull-and-push-secret -n openshift-machine-config-operator
 * https://access.redhat.com/solutions/4970731
 * https://access.redhat.com/solutions/5598401
 * https://redhat-internal.slack.com/archives/C02CZNQHGN8/p1747245572935239
+* https://issues.redhat.com/browse/OCPBUGS-56648
 * https://issues.redhat.com//browse/OCPBUGS-53408
 * https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.1/x86_64/packages
 * [internal deck](https://docs.google.com/presentation/d/14rIn35xjR8cptqzYwDoFO6IOWIUNkSBZG3K2-5WJKok/edit?slide=id.g547716335e_0_220#slide=id.g547716335e_0_220)
