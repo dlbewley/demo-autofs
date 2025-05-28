@@ -1,6 +1,9 @@
 # Demo AutoFS
 
-I need a lab where I can experiment with autofs.
+## VM Infrastructure
+
+These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps.
+
 This demo sets up 3 VMs on OpenShift Virtualization.
 
 * LDAP Server
@@ -39,6 +42,9 @@ User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from lda
 Automounting filesystems on OpenShift nodes.
 See WIP at [automount/](automount/)
 
+# Run Autofs in a Pod
+
+See [automount/](automount/). This was not entirely successful, so attention moved to running autofs directly in the Node OS.
 
 # Run Autofs in the Node OS
 
