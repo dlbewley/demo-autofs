@@ -414,7 +414,9 @@ E0525 20:24:47.976850 3459 writer.go:226] Marking Degraded due to: "error enabli
 > **Do not apply the MachineConfigs until _after_ the node is running the new image.**
 >
 > * https://issues.redhat.com/browse/OCPBUGS-56648
-> _This will have implications on attempting to add any nodes to the MachineConfigPool later._
+> * This means an additional imagebuild and reboot will happen.
+> * Another workaround may be to create 2 MachineOSConfigs and 2 MCP. The first has no machineconfigs and is a transitory MCP.
+> * The second uses the same image but includes the Machineconfigs.
 
 Use a MachineConfig resources to enable autofs and apply necessary configuration files to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
 
@@ -530,7 +532,7 @@ Writing manifest to image destination
 
 ### Workaround Testing 2025-05-27
 
-It seems if we let the image apply without any related Machineconfigs we will avoid the above.
+It seems if we let the image apply without any related Machineconfigs we will avoid the above. This means an additional image build and reboot is needed.
 
 ```bash
 # remove all machineconfigs from the worker-automount MCP
@@ -594,11 +596,197 @@ kube-rbac-proxy-crio-hub-v57jl-worker-0-5z4gs                   1/1     Running 
 machine-config-daemon-ts6hl                                     2/2     Running   0               2d1h    192.168.4.151   hub-v57jl-worker-0-5z4gs   <none>           <none>
 
 oc logs -f machine-config-daemon-ts6hl -n openshift-machine-config-operator -f
+```
 
-# right now i'm not seeing the node go unschedulable and nothing in the MCD log beyond 
+* it takes a handful of minutes before the node was cordoned i think a machineosbuild may have occured
+
+```bash
 I0528 00:26:42.801086    3662 certificate_writer.go:294] Certificate was synced from controllerconfig resourceVersion 9501408
+W0528 00:28:29.865693    3662 daemon.go:2738] Unable to check manifest for matching hash: error parsing image name "docker://quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526": invalid image name "docker://quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526", unknown transport "docker"
+I0528 00:28:29.865723    3662 image_manager_helper.go:92] Running captured: rpm-ostree kargs
+I0528 00:28:30.487694    3662 daemon.go:957] Preflight config drift check successful (took 622.035822ms)
+I0528 00:28:30.492922    3662 config_drift_monitor.go:255] Config Drift Monitor has shut down
+I0528 00:28:30.492969    3662 daemon.go:2580] Performing layered OS update
+I0528 00:28:30.613083    3662 update.go:2808] Adding SIGTERM protection
+I0528 00:28:30.613440    3662 upgrade_monitor.go:348] MCN Featuregate is not enabled. Please enable the TechPreviewNoUpgrade featureset to use MachineConfigNodes
+I0528 00:28:30.691205    3662 update.go:897] Checking Reconcilable for config rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718 to rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718
+I0528 00:28:30.831961    3662 update.go:2786] "Update prepared; requesting cordon and drain via annotation to controller"
 
-# tbd...
+I0528 00:31:20.899066    3662 update.go:2786] "drain complete"
+I0528 00:31:20.902671    3662 drain.go:125] Successful drain took 170.061540965 seconds
+I0528 00:31:20.903027    3662 update.go:939] Old MachineConfig rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718 / Image quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526 -> New MachineConfig rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718 / Image image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba
+I0528 00:31:20.903076    3662 update.go:2741] Running: rpm-ostree cleanup -p
+Deployments unchanged.
+I0528 00:31:21.208084    3662 update.go:2693] Updating OS to layered image "image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba"
+I0528 00:31:21.208139    3662 image_manager_helper.go:92] Running captured: rpm-ostree --version
+I0528 00:31:21.241098    3662 image_manager_helper.go:194] Linking rpm-ostree authfile to /etc/mco/internal-registry-pull-secret.json
+I0528 00:31:21.241192    3662 rpm-ostree.go:183] Executing rebase to image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba
+I0528 00:31:21.241210    3662 update.go:2741] Running: rpm-ostree rebase --experimental ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba
+Pulling manifest: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba
+Importing: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba (digest: sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba)
+ostree chunk layers already present: 51
+custom layers already present: 2
+custom layers needed: 2 (18.0?MB)
+[0/2] Fetching layer 8081c56ca6e5d76bca5 (1.4 MB)...done
+[1/2] Fetching layer aa669aa90b82df8c990 (16.6 MB)...done
+
+Staging deployment...done
+Added:
+  autofs-1:5.1.7-60.el9.x86_64
+  libsss_autofs-2.9.6-4.el9_6.2.x86_64
+  openldap-clients-2.6.8-4.el9.x86_64
+Changes queued for next boot. Run "systemctl reboot" to start a reboot
+I0528 00:32:07.078099    3662 update.go:1922] Updating files
+I0528 00:32:07.078202    3662 file_writers.go:234] Writing file "/usr/local/bin/nm-clean-initrd-state.sh"
+I0528 00:32:07.098618    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/01-ipv6.conf"
+I0528 00:32:07.121880    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/20-keyfiles.conf"
+I0528 00:32:07.136609    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/99-vsphere.conf"
+I0528 00:32:07.150737    3662 file_writers.go:234] Writing file "/etc/NetworkManager/dispatcher.d/30-resolv-prepender"
+I0528 00:32:07.168579    3662 file_writers.go:234] Writing file "/etc/pki/ca-trust/source/anchors/openshift-config-user-ca-bundle.crt"
+I0528 00:32:07.184183    3662 file_writers.go:234] Writing file "/etc/kubernetes/apiserver-url.env"
+I0528 00:32:07.200145    3662 file_writers.go:234] Writing file "/etc/audit/rules.d/mco-audit-quiet-containers.rules"
+I0528 00:32:07.217912    3662 file_writers.go:234] Writing file "/etc/keepalived/monitor.conf"
+I0528 00:32:07.232547    3662 file_writers.go:234] Writing file "/etc/NetworkManager/dispatcher.d/99-esp-offload"
+I0528 00:32:07.249396    3662 file_writers.go:234] Writing file "/etc/tmpfiles.d/cleanup-cni.conf"
+I0528 00:32:07.267070    3662 file_writers.go:234] Writing file "/usr/local/bin/configure-ip-forwarding.sh"
+I0528 00:32:07.285470    3662 file_writers.go:234] Writing file "/usr/local/bin/configure-ovs.sh"
+...
+I0528 00:32:07.325144    3662 file_writers.go:234] Writing file "/etc/kubernetes/static-pod-resources/coredns/Corefile.tmpl"                                                                                                       I0528 00:32:07.341488    3662 file_writers.go:234] Writing file "/etc/kubernetes/manifests/coredns.yaml"
+I0528 00:32:07.356542    3662 file_writers.go:234] Writing file "/etc/docker/certs.d/.create"
+I0528 00:32:07.373459    3662 file_writers.go:234] Writing file "/etc/mco/proxy.env"
+I0528 00:32:07.390397    3662 file_writers.go:234] Writing file "/etc/systemd/system.conf.d/10-default-env-godebug.conf"
+I0528 00:32:07.406191    3662 file_writers.go:234] Writing file "/etc/NetworkManager/dispatcher.d/99-gcp-disable-idpf-tx-checksum-off"
+I0528 00:32:07.423404    3662 file_writers.go:234] Writing file "/etc/modules-load.d/iptables.conf"
+I0528 00:32:07.443127    3662 file_writers.go:234] Writing file "/etc/kubernetes/static-pod-resources/keepalived/keepalived.conf.tmpl"
+I0528 00:32:07.459360    3662 file_writers.go:234] Writing file "/etc/kubernetes/static-pod-resources/keepalived/scripts/chk_default_ingress.sh.tmpl"                                                                              I0528 00:32:07.476355    3662 file_writers.go:234] Writing file "/etc/kubernetes/manifests/keepalived.yaml"
+I0528 00:32:07.497417    3662 file_writers.go:234] Writing file "/etc/node-sizing-enabled.env"
+I0528 00:32:07.512697    3662 file_writers.go:234] Writing file "/usr/local/sbin/dynamic-system-reserved-calc.sh"
+I0528 00:32:07.527891    3662 file_writers.go:234] Writing file "/etc/systemd/system.conf.d/kubelet-cgroups.conf"                                                                                                                  I0528 00:32:07.541945    3662 file_writers.go:234] Writing file "/etc/systemd/system/kubelet.service.d/20-logging.conf"
+I0528 00:32:07.557819    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/sdn.conf"
+I0528 00:32:07.571817    3662 file_writers.go:234] Writing file "/usr/local/bin/nmstate-configuration.sh"
+...
+I0528 00:32:11.335623    3662 update.go:2277] Could not reset unit preset for ipsec.service, skipping. (Error msg: error running preset on unit: Failed to preset unit: Unit file ipsec.service does not exist.
+)
+I0528 00:32:11.335826    3662 file_writers.go:294] Writing systemd unit "kubelet-auto-node-size.service"
+I0528 00:32:11.352657    3662 file_writers.go:307] Disabling systemd unit kubelet-auto-node-size.service before re-writing it
+I0528 00:32:12.277828    3662 file_writers.go:294] Writing systemd unit "kubelet-dependencies.target"
+I0528 00:32:13.449716    3662 update.go:2240] Preset systemd unit "kubelet-dependencies.target"
+I0528 00:32:13.449961    3662 file_writers.go:208] Writing systemd unit dropin "01-kubens.conf"
+I0528 00:32:13.451414    3662 file_writers.go:194] Dropin for 10-mco-default-env.conf has no content, skipping write
+I0528 00:32:13.451534    3662 file_writers.go:201] Removing "/etc/systemd/system/kubelet.service.d/10-mco-default-env.conf", updated file has zero length
+I0528 00:32:13.451639    3662 file_writers.go:208] Writing systemd unit dropin "10-mco-on-prem-wait-resolv.conf"
+I0528 00:32:13.452385    3662 file_writers.go:208] Writing systemd unit dropin "10-mco-default-madv.conf"
+I0528 00:32:13.452877    3662 file_writers.go:294] Writing systemd unit "kubelet.service"
+I0528 00:32:13.473182    3662 file_writers.go:307] Disabling systemd unit kubelet.service before re-writing it
+I0528 00:32:14.612413    3662 file_writers.go:294] Writing systemd unit "kubens.service"
+I0528 00:32:14.635457    3662 file_writers.go:294] Writing systemd unit "machine-config-daemon-firstboot.service"
+I0528 00:32:14.655239    3662 file_writers.go:307] Disabling systemd unit machine-config-daemon-firstboot.service before re-writing it
+I0528 00:32:15.617185    3662 file_writers.go:294] Writing systemd unit "machine-config-daemon-pull.service"
+I0528 00:32:15.639073    3662 file_writers.go:307] Disabling systemd unit machine-config-daemon-pull.service before re-writing it
+I0528 00:32:16.912917    3662 file_writers.go:294] Writing systemd unit "nmstate-configuration.service"
+I0528 00:32:16.937426    3662 file_writers.go:307] Disabling systemd unit nmstate-configuration.service before re-writing it
+I0528 00:32:17.817179    3662 file_writers.go:294] Writing systemd unit "node-valid-hostname.service"
+I0528 00:32:17.835273    3662 file_writers.go:307] Disabling systemd unit node-valid-hostname.service before re-writing it
+I0528 00:32:19.184694    3662 file_writers.go:294] Writing systemd unit "nodeip-configuration-vsphere-upi.service"
+I0528 00:32:19.212256    3662 file_writers.go:294] Writing systemd unit "nodeip-configuration.service"
+I0528 00:32:19.240152    3662 file_writers.go:307] Disabling systemd unit nodeip-configuration.service before re-writing it
+I0528 00:32:20.606824    3662 file_writers.go:294] Writing systemd unit "on-prem-resolv-prepender.path"
+I0528 00:32:20.633426    3662 file_writers.go:307] Disabling systemd unit on-prem-resolv-prepender.path before re-writing it
+I0528 00:32:21.677791    3662 file_writers.go:294] Writing systemd unit "on-prem-resolv-prepender.service"
+I0528 00:32:21.701174    3662 file_writers.go:294] Writing systemd unit "ovs-configuration.service"
+I0528 00:32:21.719755    3662 file_writers.go:307] Disabling systemd unit ovs-configuration.service before re-writing it
+I0528 00:32:22.661998    3662 file_writers.go:208] Writing systemd unit dropin "10-ovs-vswitchd-restart.conf"
+I0528 00:32:23.742611    3662 update.go:2240] Preset systemd unit "ovs-vswitchd.service"
+I0528 00:32:23.742697    3662 file_writers.go:208] Writing systemd unit dropin "10-ovsdb-restart.conf"
+I0528 00:32:23.743951    3662 file_writers.go:194] Dropin for 10-mco-default-env.conf has no content, skipping write
+I0528 00:32:23.743994    3662 file_writers.go:201] Removing "/etc/systemd/system/rpm-ostreed.service.d/10-mco-default-env.conf", updated file has zero length
+I0528 00:32:24.749332    3662 update.go:2240] Preset systemd unit "rpm-ostreed.service"
+I0528 00:32:24.749397    3662 file_writers.go:294] Writing systemd unit "vsphere-hostname.service"
+I0528 00:32:24.769767    3662 file_writers.go:307] Disabling systemd unit vsphere-hostname.service before re-writing it
+I0528 00:32:25.851204    3662 file_writers.go:294] Writing systemd unit "wait-for-br-ex-up.service"
+I0528 00:32:25.881418    3662 file_writers.go:307] Disabling systemd unit wait-for-br-ex-up.service before re-writing it
+I0528 00:32:26.872295    3662 file_writers.go:294] Writing systemd unit "wait-for-ipsec-connect.service"
+I0528 00:32:26.898487    3662 file_writers.go:307] Disabling systemd unit wait-for-ipsec-connect.service before re-writing it
+I0528 00:32:27.864035    3662 file_writers.go:294] Writing systemd unit "wait-for-primary-ip.service"
+I0528 00:32:27.881444    3662 file_writers.go:307] Disabling systemd unit wait-for-primary-ip.service before re-writing it
+I0528 00:32:28.859024    3662 file_writers.go:208] Writing systemd unit dropin "mco-disabled.conf"
+I0528 00:32:28.880708    3662 update.go:2277] Could not reset unit preset for zincati.service, skipping. (Error msg: error running preset on unit: Failed to preset unit: Unit file zincati.service does not exist.
+)
+I0528 00:32:28.880761    3662 file_writers.go:294] Writing systemd unit "kubelet-cleanup.service"
+I0528 00:32:28.909934    3662 file_writers.go:307] Disabling systemd unit kubelet-cleanup.service before re-writing it
+I0528 00:32:31.013274    3662 update.go:2218] Enabled systemd units: [NetworkManager-clean-initrd-state.service firstboot-osupdate.target kubelet-auto-node-size.service kubelet.service machine-config-daemon-firstboot.service machine-config-daemon-pull.service nmstate-configuration.service node-valid-hostname.service nodeip-configuration.service on-prem-resolv-prepender.path openvswitch.service ovs-configuration.service ovsdb-server.service vsphere-hostname.service wait-for-br-ex-up.service wait-for-ipsec-connect.service wait-for-primary-ip.service kubelet-cleanup.service]
+I0528 00:32:31.994868    3662 update.go:2229] Disabled systemd units [kubens.service nodeip-configuration-vsphere-upi.service on-prem-resolv-prepender.service]
+I0528 00:32:31.995099    3662 update.go:1985] Deleting stale data
+I0528 00:32:31.995474    3662 update.go:2415] updating the permission of the kubeconfig to: 0o600
+I0528 00:32:31.995615    3662 update.go:2381] Checking if absent users need to be disconfigured
+I0528 00:32:32.047422    3662 update.go:2406] Password has been configured
+I0528 00:32:32.056314    3662 update.go:2817] Removing SIGTERM protection
+I0528 00:32:32.056432    3662 update.go:2786] "initiating reboot: Node will reboot into image image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba / MachineConfig rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718"
+I0528 00:32:32.222114    3662 update.go:2786] "reboot successful"
+I0528 00:32:32.239273    3662 daemon.go:711] Node hub-v57jl-worker-0-5z4gs is queued for a reboot, skipping sync.
+I0528 00:32:32.560334    3662 daemon.go:3044] Daemon logs from /var/log/pods/openshift-machine-config-operator_machine-config-daemon-ts6hl_5dc2f1ef-8e52-45e9-82d9-a9b1c5460585 preserved at /etc/machine-config-daemon/previous-logs/openshift-machine-config-operator_machine-config-daemon-ts6hl_5dc2f1ef-8e52-45e9-82d9-a9b1c5460585
+I0528 00:32:32.560597    3662 daemon.go:1420] Shutting down MachineConfigDaemon
+```
+
+* After node reboot
+
+```bash
+ oc get mcp
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
+worker-automount   rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718   True      False      False      1              1                   1                     0                      2d8h
+
+oc get nodes
+NAME                       STATUS   ROLES                  AGE    VERSION
+hub-v57jl-master-0         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-master-1         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-master-2         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-store-1-wqqb7    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-store-2-2hhjk    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-store-3-q42r2    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-worker-0-4pgbn   Ready    worker                 9h     v1.32.4
+hub-v57jl-worker-0-5z4gs   Ready    worker-automount       2d2h   v1.32.4
+hub-v57jl-worker-0-v6snn   Ready    worker                 18m    v1.32.4
+hub-v57jl-worker-0-vcl9c   Ready    worker                 9h     v1.32.4
+
+oc debug node/hub-v57jl-worker-0-5z4gs
+Starting pod/hub-v57jl-worker-0-5z4gs-debug-wxrm6 ...
+To use host binaries, run `chroot /host`. Instead, if you need to access host namespaces, run `nsenter -a -t 1`.
+
+Pod IP: 192.168.4.151
+If you don't see a command prompt, try pressing enter.
+sh-5.1#
+sh-5.1# chroot /host
+sh-5.1# rpm -q autofs
+autofs-5.1.7-60.el9.x86_64
+```
+
+* Now apply the machineconfigs to enable autofs
+
+```bash
+ oc apply -k machineconfigs
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
+
+ioc get mcp
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
+worker-automount   rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718   False     True       False      1              0                   0                     0                      2d8h
+```
+
+* I broke ssh logins to core, debugging tbd, but autofs is working now!
+
+```bash
+oc debug node/$TEST_WORKER
+sh-5.1# chroot /host
+sh-5.1# ls -a ~dale
+.  ..  .bash_history  .bash_logout  .bash_profile  .bashrc  .ssh
+sh-5.1# df -h ~dale
+Filesystem              Size  Used Avail Use% Mounted on
+nfs:/exports/home/dale   29G  2.0G   27G   7% /var/home/dale
 ```
 
 # Testing AutoFS
