@@ -8,7 +8,7 @@ This deployment runs as UID/GUID 1001 and mounts the hostpath `/home/dale` at `/
 oc apply -k hostpath-volume
 ```
 
-Lo
+Log into the pod and view the mounted filesystem. Confirm POSIX perms.
 
 ```bash
 oc rsh -n demo-hostpath-volume demo-hostpath-volume-59c5bb5ccd-gjdps
