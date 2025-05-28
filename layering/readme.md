@@ -188,8 +188,6 @@ renderedImagePushSecret:
 
 ## Build Configs and Layered Image
 
-This machineconfig is associated with the just created `worker-automount` machine config pool.
-
 * Create [worker-automount machineconfigpool](machineconfigpool.yaml) to use for initial testing of the image build. Ensure the MCP is initially **paused**.
 
 ```bash
@@ -418,7 +416,8 @@ E0525 20:24:47.976850 3459 writer.go:226] Marking Degraded due to: "error enabli
 > * https://issues.redhat.com/browse/OCPBUGS-56648
 > _This will have implications on attempting to add any nodes to the MachineConfigPool later._
 
-Use a MachineConfig resource to enable autofs and apply necessary configuration files to the nodes.
+Use a MachineConfig resources to enable autofs and apply necessary configuration files to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
+
 
 > [!IMPORTANT]
 > CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
@@ -527,6 +526,79 @@ Copying blob 5d877c30355f done   |
 Copying config 54c58bb1b7 done   |
 Writing manifest to image destination
 54c58bb1b721d0dd10ca19b8948972b11c6f5c0c30b627fd16525dcfe65ac314
+```
+
+### Workaround Testing 2025-05-27
+
+It seems if we let the image apply without any related Machineconfigs we will avoid the above.
+
+```bash
+# remove all machineconfigs from the worker-automount MCP
+oc delete -k machineconfigs
+machineconfig.machineconfiguration.openshift.io "99-worker-automount-autofs" deleted
+machineconfig.machineconfiguration.openshift.io "99-worker-automount-nfs-homedir-setsebool" deleted
+machineconfig.machineconfiguration.openshift.io "99-worker-automount-sssd" deleted
+
+# don't forget cruft machineconfigs created before
+oc delete machineconfigs -l machineconfiguration.openshift.io/role=worker-automount
+machineconfig.machineconfiguration.openshift.io "99-worker-automount-autofs-service" deleted
+machineconfig.machineconfiguration.openshift.io "99-worker-automount-sssd-config" deleted
+
+
+# no nodes in the worker-automount MCP
+oc get mcp
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
+worker-automount   rendered-worker-automount-282653962a2d3a7860480d87467a48f7   True      False      False      0              0                   0                     0                      2d7h
+
+oc get nodes
+NAME                       STATUS   ROLES                  AGE    VERSION
+hub-v57jl-master-0         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-master-1         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-master-2         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-store-1-wqqb7    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-store-2-2hhjk    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-store-3-q42r2    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-worker-0-4pgbn   Ready    worker                 9h     v1.32.4
+hub-v57jl-worker-0-5z4gs   Ready    worker                 2d1h   v1.32.4
+hub-v57jl-worker-0-vcl9c   Ready    worker                 9h     v1.32.4
+
+# label a node and wait to see if it gets the new image applied successfully
+export TEST_WORKER=hub-v57jl-worker-0-5z4gs
+oc label node $TEST_WORKER node-role.kubernetes.io/worker- node-role.kubernetes.io/worker-automount=''
+
+oc get mcp
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
+worker-automount   rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718   False     True       False      1              0                   0                     0                      2d7h
+
+# see new role on $TEST_NODE
+oc get nodes
+NAME                       STATUS   ROLES                  AGE    VERSION
+hub-v57jl-master-0         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-master-1         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-master-2         Ready    control-plane,master   8d     v1.32.4
+hub-v57jl-store-1-wqqb7    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-store-2-2hhjk    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-store-3-q42r2    Ready    infra,worker           8d     v1.32.4
+hub-v57jl-worker-0-4pgbn   Ready    worker                 9h     v1.32.4
+hub-v57jl-worker-0-5z4gs   Ready    worker-automount       2d1h   v1.32.4
+hub-v57jl-worker-0-v6snn   Ready    worker                 5m7s   v1.32.4
+hub-v57jl-worker-0-vcl9c   Ready    worker                 9h     v1.32.4
+
+# watch mcd logs
+oc get pods -o wide -n openshift-machine-config-operator | grep $TEST_WORKER
+kube-rbac-proxy-crio-hub-v57jl-worker-0-5z4gs                   1/1     Running   3 (2d1h ago)    2d1h    192.168.4.151   hub-v57jl-worker-0-5z4gs   <none>           <none>
+machine-config-daemon-ts6hl                                     2/2     Running   0               2d1h    192.168.4.151   hub-v57jl-worker-0-5z4gs   <none>           <none>
+
+oc logs -f machine-config-daemon-ts6hl -n openshift-machine-config-operator -f
+
+# right now i'm not seeing the node go unschedulable and nothing in the MCD log beyond 
+I0528 00:26:42.801086    3662 certificate_writer.go:294] Certificate was synced from controllerconfig resourceVersion 9501408
+
+# tbd...
 ```
 
 # Testing AutoFS
