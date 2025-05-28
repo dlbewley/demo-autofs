@@ -39,6 +39,15 @@ User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from lda
 Automounting filesystems on OpenShift nodes.
 See WIP at [automount/](automount/)
 
-## See Also
+
+# Run Autofs in the Node OS
+
+See [layering/](layering/)
+
+## Access NFS mounted host paths in pod
+
+See [hostpath-volume/](hostpath-volume/)
+
+# See Also
 
 * https://github.com/dlbewley/openshift-automount-nfs-poc/tree/rev2025
