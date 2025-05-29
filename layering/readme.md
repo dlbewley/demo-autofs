@@ -44,7 +44,7 @@ To apply a custom layered image to your cluster by using the on-cluster build pr
 * ✅ Testing on OpenShift 4.19rc2 MachineOSConfig v1 was successful. (Caveat [this bug](https://issues.redhat.com/browse/OCPBUGS-56648))
 * ❌ Testing on OpenShift 4.18.10 MachineOSConfig v1alpha1 was not successful.
 
-## Provision Image Registry to hold layered image
+## Provisioning an Image Registry to hold layered image
 
 Identify a registry or [enable the on-cluster registry](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/registry/setting-up-and-configuring-the-registry#configuring-registry-storage-baremetal)
 
@@ -95,7 +95,7 @@ $ oc patch configs.imageregistry.operator.openshift.io/cluster \
     --patch '{"spec":{"defaultRoute":true}}' --type=merge
 ```
 
-## Pull and Push Secrets
+## Creating Pull and Push Secrets
 
 Create a pull-secret with the ability to push to the cluster image registry in the `openshift-machine-config-operator` namespace. 
 
@@ -103,9 +103,7 @@ Create a pull-secret with the ability to push to the cluster image registry in t
 
 ```bash
 export REGISTRY=image-registry.openshift-image-registry.svc:5000
-# this user is not in the `-n openshift-machine-config-operator rolebinding/sytem:image-builder`
-#export REGISTRY_USER=machine-os-builder
-# this user is
+# this serviceaccount is in the `-n openshift-machine-config-operator rolebinding/sytem:image-builder`
 export REGISTRY_USER=builder
 export REGISTRY_NAMESPACE=openshift-machine-config-operator
 export TOKEN=$(oc create token $REGISTRY_USER -n $REGISTRY_NAMESPACE --duration=$((720*24))h)
@@ -130,7 +128,16 @@ oc create secret docker-registry push-secret \
 > `date -r 1810409199`
 > Sat May 15 12:26:39 PDT 2027
 
-* Extract the global pull secret to a file
+* Extract the created push secret to a file
+
+```bash
+oc extract secret/push-secret -n openshift-machine-config-operator --to=- > push-secret.json
+
+cat push-secret.json| jq '.auths|keys[]'
+"image-registry.openshift-image-registry.svc:5000"
+```
+
+* Extract the cluster global pull secret to a file
 
 ```bash
 oc extract secret/pull-secret -n openshift-config --to=- > pull-secret.json
@@ -140,15 +147,6 @@ cat pull-secret.json| jq '.auths|keys[]'
 "quay.io"
 "registry.connect.redhat.com"
 "registry.redhat.io"
-```
-
-* Extract the created push secret to a file
-
-```bash
-oc extract secret/push-secret -n openshift-machine-config-operator --to=- > push-secret.json
-
-cat push-secret.json| jq '.auths|keys[]'
-"image-registry.openshift-image-registry.svc:5000"
 ```
 
 * Combine the global pull secret and the just created push secret into a new pull secret. Refer to this secret in the `MachineOSConfig.spec.baseImagePullSecret` later.
@@ -186,9 +184,23 @@ renderedImagePushSecret:
 
 # Deployment
 
-## Build Configs and Layered Image
+> [!WARNING]
+> 🐛 Bug [OCPBUGS-56648](https://issues.redhat.com/browse/OCPBUGS-56648) requires a 2 step process of enrolling a node at this time.
+> 
+> Since this image adds a service (autofs) which will be enabled via MachineConfig this workaround is required:
+>
+> * Ensure that the custom image is applied and running on a node first
+> * Only then, apply the machineconfigs that require the custom image
+> * It may be best to creae a transitory `worker-imaging` MCP that nodeas pass through just for the image swap
+> * Using 2 MCP also means 2 machineosconfigs and 2 image builds
+
+## Creating MachineConfigPool and MachineOSConfig
+
+The [`MachineOSConfig`](machineosconfig.yaml) resource defines how to build the layered CoreOS image. It is assocatied with a MachineConfigPool to target the machines that should run the image.
 
 * Create [worker-automount machineconfigpool](machineconfigpool.yaml) to use for initial testing of the image build. Ensure the MCP is initially **paused**.
+
+This MCP will include MachineConfig resources from the existing worker role and will later include [MachineConfig resources](machineconfigs/kustimization.yaml) to configure autofs. **Do not create those yet.**
 
 ```bash
 oc create -f machineconfigpool.yaml
@@ -200,13 +212,13 @@ worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718   True      
 worker-automount                                                                                                                                                                      5s
 ```
 
-
 > [!NOTE]
 > **Entitlements**
 >
 > Entitlement to download RPMs are enabled by an automatic copy of the `etc-pki-entitlement` secret from the `openshift-config-managed` namespace into the openshift-machine-config-operator namespace.
+> Your cluster global pull secret must have proper entitlement to pass on to the nodes.
 
-* Create the MachineOSConfig to define and begin the image build.
+* Create the [`MachineOSConfig`](machineosconfig.yaml) to define and begin the image build.
 
 ```bash
 oc create -f machineosconfig.yaml
@@ -217,7 +229,7 @@ oc get secrets -n openshift-machine-config-operator | grep entitle
 etc-pki-entitlement-worker-automount        Opaque                                2      2s
 ```
 
-* A Job in the openshift-machine-config-operator namespace defined by the machineosconfig will create a `MachineOSBuild` and being a build.
+* A Job in the openshift-machine-config-operator namespace defined by the machineosconfig will create a pod to perform the build and a `MachineOSBuild` to track the build.
 
 ```bash
 oc get jobs -n openshift-machine-config-operator
@@ -233,9 +245,8 @@ build-worker-automount-5d5651f25efcbf89dd1d2874ad05c8c1-c65xf   2/2     Running 
 machine-os-builder-57bb5fc9cc-2vx8z                             1/1     Running   0               30s
 ```
 
-* Pod start up takes a couple of minutes. Watch the logs and confirm a successful push of the resulting image.
+* Pod start up takes a couple of minutes. Watch the logs and confirm a successful access to RPM repositories and push of the resulting image.
 
-Push FAILED
 ```bash
 oc logs  -n  openshift-machine-config-operator -f build-worker-automount-5d5651f25efcbf89dd1d2874ad05c8c1-c65xf
 ...
@@ -268,11 +279,11 @@ worker-automount-5d5651f25efcbf89dd1d2874ad05c8c1   False      False      True  
 ```
 
 > [!NOTE]
-> Creating or modifying MachineConfigs will trigger a new MachineOSBuild.
+> Creating or modifying MachineConfigs will always trigger a new MachineOSBuild.
 
-## Apply Layered Image to Nodes
+## Applying the Layered Image to Nodes
 
-* View current state
+* View the current state
 
 ```bash
 oc get clusterversion
@@ -362,64 +373,15 @@ libsss_autofs-2.9.6-4.el9_6.2.x86_64
 openldap-clients-2.6.8-4.el9.x86_64
 Changes queued for next boot. Run "systemctl reboot" to start a reboot
 ...
-I0525 20:24:41.871735 3459 update.go:2277] Could not reset unit preset for ipsec.service, skipping. (Error msg: error running preset on unit: Failed to preset unit: Unit file ipsec.service does not exist.
-)
-I0525 20:24:41.871779 3459 file_writers.go:294] Writing systemd unit "kubelet-auto-node-size.service"
-I0525 20:24:41.888322 3459 file_writers.go:294] Writing systemd unit "kubelet-dependencies.target"
-I0525 20:24:42.834452 3459 update.go:2240] Preset systemd unit "kubelet-dependencies.target"
-I0525 20:24:42.834486 3459 file_writers.go:208] Writing systemd unit dropin "01-kubens.conf"
-I0525 20:24:42.839658 3459 file_writers.go:194] Dropin for 10-mco-default-env.conf has no content, skipping write
-I0525 20:24:42.839703 3459 file_writers.go:208] Writing systemd unit dropin "10-mco-on-prem-wait-resolv.conf"
-I0525 20:24:42.841951 3459 file_writers.go:208] Writing systemd unit dropin "10-mco-default-madv.conf"
-I0525 20:24:42.843904 3459 file_writers.go:294] Writing systemd unit "kubelet.service"
-I0525 20:24:42.861748 3459 file_writers.go:294] Writing systemd unit "kubens.service"
-I0525 20:24:42.877907 3459 file_writers.go:294] Writing systemd unit "machine-config-daemon-firstboot.service"
-I0525 20:24:42.893382 3459 file_writers.go:294] Writing systemd unit "machine-config-daemon-pull.service"
-I0525 20:24:42.908275 3459 file_writers.go:294] Writing systemd unit "nmstate-configuration.service"
-I0525 20:24:42.922699 3459 file_writers.go:294] Writing systemd unit "node-valid-hostname.service"
-I0525 20:24:42.939197 3459 file_writers.go:294] Writing systemd unit "nodeip-configuration-vsphere-upi.service"
-I0525 20:24:42.957322 3459 file_writers.go:294] Writing systemd unit "nodeip-configuration.service"
-I0525 20:24:42.973771 3459 file_writers.go:294] Writing systemd unit "on-prem-resolv-prepender.path"
-I0525 20:24:42.990781 3459 file_writers.go:294] Writing systemd unit "on-prem-resolv-prepender.service"
-I0525 20:24:43.006576 3459 file_writers.go:294] Writing systemd unit "ovs-configuration.service"
-I0525 20:24:43.025021 3459 file_writers.go:208] Writing systemd unit dropin "10-ovs-vswitchd-restart.conf"
-I0525 20:24:44.031059 3459 update.go:2240] Preset systemd unit "ovs-vswitchd.service"
-I0525 20:24:44.031093 3459 file_writers.go:208] Writing systemd unit dropin "10-ovsdb-restart.conf"
-I0525 20:24:44.032005 3459 file_writers.go:194] Dropin for 10-mco-default-env.conf has no content, skipping write
-I0525 20:24:44.886229 3459 update.go:2240] Preset systemd unit "rpm-ostreed.service"
-I0525 20:24:44.886283 3459 file_writers.go:294] Writing systemd unit "vsphere-hostname.service"
-I0525 20:24:44.920913 3459 file_writers.go:294] Writing systemd unit "wait-for-br-ex-up.service"
-I0525 20:24:44.947279 3459 file_writers.go:294] Writing systemd unit "wait-for-ipsec-connect.service"
-I0525 20:24:44.974165 3459 file_writers.go:294] Writing systemd unit "wait-for-primary-ip.service"
-I0525 20:24:44.995402 3459 file_writers.go:208] Writing systemd unit dropin "mco-disabled.conf"
-I0525 20:24:45.019360 3459 update.go:2277] Could not reset unit preset for zincati.service, skipping. (Error msg: error running preset on unit: Failed to preset unit: Unit file zincati.service does not exist.
-)
-I0525 20:24:45.019428 3459 file_writers.go:294] Writing systemd unit "kubelet-cleanup.service"
-I0525 20:24:45.043579 3459 file_writers.go:294] Writing systemd unit "setsebool-nfs-home.service"
-I0525 20:24:45.115417 3459 update.go:2873] Already in desired image quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526
-I0525 20:24:45.115451 3459 update.go:2741] Running: rpm-ostree cleanup -p
-Pruned images: 1 (layers: 2)
-Freed: 59.0?MB (pkgcache branches: 0)
-I0525 20:24:47.976793 3459 update.go:2817] Removing SIGTERM protection
-E0525 20:24:47.976850 3459 writer.go:226] Marking Degraded due to: "error enabling units: Failed to enable unit: Unit file autofs.service does not exist.\n"
-...
 ```
 
-## Use MachineConfigs to Configure and Enable Automountd
-
->[!NOTE]
-> I have not _yet_ tested the workaround described in the following warning, but it _should_ work.
+## Applying the MachineConfigs to Configure and Enable Automountd
 
 > [!WARNING]
-> **Do not apply the MachineConfigs until _after_ the node is running the new image.**
->
-> * https://issues.redhat.com/browse/OCPBUGS-56648
-> * This means an additional imagebuild and reboot will happen.
-> * Another workaround may be to create 2 MachineOSConfigs and 2 MCP. The first has no machineconfigs and is a transitory MCP.
-> * The second uses the same image but includes the Machineconfigs.
+> **Do not apply theese MachineConfigs until _after_ the node is running the new image.**
+> 🐛 Bug [OCPBUGS-56648](https://issues.redhat.com/browse/OCPBUGS-56648)
 
-Use a MachineConfig resources to enable autofs and apply necessary configuration files to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
-
+Use a MachineConfig resources to enable autofs and apply the necessary [configuration files](scripts/) to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
 
 > [!IMPORTANT]
 > CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
@@ -427,8 +389,7 @@ Use a MachineConfig resources to enable autofs and apply necessary configuration
 * Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary.
 
 ```bash
-cd machineconfigs
-make
+make -C machineconfigs
 ```
 
 * Adjust the role label in the [kustomization.yaml](machineconfigs/kustomization.yaml) if necessary to match the desired machineconfigpool (_worker-automount_).
@@ -442,93 +403,9 @@ machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
 ```
 
-* This will cause another reboot of the node as the MachineConfigPool is updated.
+* This will cause another image build and reboot of the node as the MachineConfigPool is updated.
 
 # Debugging
-## Debug Failed MCP Update 2025-05-26
-
-Machineconfig seems to apply (i.e. /etc/sssd/conf.d/homedir.conf was written) but OS Image does not apply.
-
-* [Full node MCD log](./hub-v57jl-worker-0-dn4tm.mcd.log)
-
-```bash
-[root@hub-v57jl-worker-0-dn4tm ~]# rpm-ostree status -v
-State: busy
-AutomaticUpdates: disabled
-Transaction: rebase --experimental 'ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:a18f86073faf0659cfdf8753a2dc0697126515c264b2ce7da2a3b3b6f9931f7e'
-
-  Initiator: client(id:machine-config-operator dbus:1.8151 unit:crio-8ce30d46daaa44c80724020560851c8077761590c768e7fab07a38897a1ac296.scope uid:0)
-Deployments:
-● ostree-unverified-registry:quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526 (index: 0)
-                   Digest: sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526
-                  Version: 9.6.20250514-0 (2025-05-14T23:44:17Z)
-                   Commit: c59fb73267cf3c6c6c44813dd3238888b9c500c8f7bee9521126079f6d455c29
-                   Staged: no
-                StateRoot: rhcos
-
-# Pulling with /var/lib/kubelet/config.json does not work but /etc/mco/internal-registry-pull-secret.json does
-[root@hub-v57jl-worker-0-dn4tm mco]# podman pull --authfile /etc/mco/internal-registry-pull-secret.json image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:a18f86073faf0659cfdf8753a2dc0697126515c264b2ce7da2a3b3b6f9931f7e
-Trying to pull image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:a18f86073faf0659cfdf8753a2dc0697126515c264b2ce7da2a3b3b6f9931f7e...
-Getting image source signatures
-Copying blob 8552e7a85c92 skipped: already exists
-Copying blob 71721122e569 skipped: already exists
-Copying blob 13e28b74b412 skipped: already exists
-Copying blob 2616319dd0b6 skipped: already exists
-Copying blob f76bdafcae74 skipped: already exists
-Copying blob 9ad3fd294b52 skipped: already exists
-Copying blob 9b13a23c869f skipped: already exists
-Copying blob 57efe3163425 skipped: already exists
-Copying blob 1c21b7fdab24 skipped: already exists
-Copying blob c77168d99d3c skipped: already exists
-Copying blob c0edf73ad374 skipped: already exists
-Copying blob d72350910969 skipped: already exists
-Copying blob a7d8055279dc skipped: already exists
-Copying blob dbe6e35d1324 skipped: already exists
-Copying blob 86dd130c82b8 skipped: already exists
-Copying blob 43dfcb10b34f skipped: already exists
-Copying blob 7b090b813be3 skipped: already exists
-Copying blob 00baa96f6230 skipped: already exists
-Copying blob 74ad4e117528 skipped: already exists
-Copying blob 548bb8e38df2 skipped: already exists
-Copying blob 33ed4bd82eee skipped: already exists
-Copying blob 9d30772dfd48 skipped: already exists
-Copying blob 4696487faff7 skipped: already exists
-Copying blob e12bf279c043 skipped: already exists
-Copying blob 24abc80a6dbf skipped: already exists
-Copying blob f65b36dff745 skipped: already exists
-Copying blob f2dd23180414 skipped: already exists
-Copying blob f73207ff9240 skipped: already exists
-Copying blob 8b62e111a9b7 skipped: already exists
-Copying blob cb319d70da5e skipped: already exists
-Copying blob 00e24dc97786 skipped: already exists
-Copying blob 99b100f4aa2f skipped: already exists
-Copying blob cbc00d7179ab skipped: already exists
-Copying blob 5479e2bbc9cb skipped: already exists
-Copying blob 251b5f43edf7 skipped: already exists
-Copying blob bd7b3c980c8f skipped: already exists
-Copying blob 91982cedf9c2 skipped: already exists
-Copying blob 48844b90a6c9 skipped: already exists
-Copying blob 2a34404056f8 skipped: already exists
-Copying blob 595813649d13 skipped: already exists
-Copying blob f26f793252f5 skipped: already exists
-Copying blob 8e8e44669fd1 skipped: already exists
-Copying blob c639dcdae0ff skipped: already exists
-Copying blob 3202adf0a72b skipped: already exists
-Copying blob 176cfcfdcfdb skipped: already exists
-Copying blob 082f42ad8236 skipped: already exists
-Copying blob c1a31ba9dbc7 skipped: already exists
-Copying blob 0c9fb1e1605c skipped: already exists
-Copying blob c0f983ada380 skipped: already exists
-Copying blob 256c087f65fc skipped: already exists
-Copying blob ad312c5c40cc skipped: already exists
-Copying blob 3cefea365c61 skipped: already exists
-Copying blob 1e8bd20f9c81 skipped: already exists
-Copying blob 1f51303d225d done   |
-Copying blob 5d877c30355f done   |
-Copying config 54c58bb1b7 done   |
-Writing manifest to image destination
-54c58bb1b721d0dd10ca19b8948972b11c6f5c0c30b627fd16525dcfe65ac314
-```
 
 ### Workaround Testing 2025-05-27
 
@@ -637,90 +514,7 @@ Added:
   openldap-clients-2.6.8-4.el9.x86_64
 Changes queued for next boot. Run "systemctl reboot" to start a reboot
 I0528 00:32:07.078099    3662 update.go:1922] Updating files
-I0528 00:32:07.078202    3662 file_writers.go:234] Writing file "/usr/local/bin/nm-clean-initrd-state.sh"
-I0528 00:32:07.098618    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/01-ipv6.conf"
-I0528 00:32:07.121880    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/20-keyfiles.conf"
-I0528 00:32:07.136609    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/99-vsphere.conf"
-I0528 00:32:07.150737    3662 file_writers.go:234] Writing file "/etc/NetworkManager/dispatcher.d/30-resolv-prepender"
-I0528 00:32:07.168579    3662 file_writers.go:234] Writing file "/etc/pki/ca-trust/source/anchors/openshift-config-user-ca-bundle.crt"
-I0528 00:32:07.184183    3662 file_writers.go:234] Writing file "/etc/kubernetes/apiserver-url.env"
-I0528 00:32:07.200145    3662 file_writers.go:234] Writing file "/etc/audit/rules.d/mco-audit-quiet-containers.rules"
-I0528 00:32:07.217912    3662 file_writers.go:234] Writing file "/etc/keepalived/monitor.conf"
-I0528 00:32:07.232547    3662 file_writers.go:234] Writing file "/etc/NetworkManager/dispatcher.d/99-esp-offload"
-I0528 00:32:07.249396    3662 file_writers.go:234] Writing file "/etc/tmpfiles.d/cleanup-cni.conf"
-I0528 00:32:07.267070    3662 file_writers.go:234] Writing file "/usr/local/bin/configure-ip-forwarding.sh"
-I0528 00:32:07.285470    3662 file_writers.go:234] Writing file "/usr/local/bin/configure-ovs.sh"
 ...
-I0528 00:32:07.325144    3662 file_writers.go:234] Writing file "/etc/kubernetes/static-pod-resources/coredns/Corefile.tmpl"                                                                                                       I0528 00:32:07.341488    3662 file_writers.go:234] Writing file "/etc/kubernetes/manifests/coredns.yaml"
-I0528 00:32:07.356542    3662 file_writers.go:234] Writing file "/etc/docker/certs.d/.create"
-I0528 00:32:07.373459    3662 file_writers.go:234] Writing file "/etc/mco/proxy.env"
-I0528 00:32:07.390397    3662 file_writers.go:234] Writing file "/etc/systemd/system.conf.d/10-default-env-godebug.conf"
-I0528 00:32:07.406191    3662 file_writers.go:234] Writing file "/etc/NetworkManager/dispatcher.d/99-gcp-disable-idpf-tx-checksum-off"
-I0528 00:32:07.423404    3662 file_writers.go:234] Writing file "/etc/modules-load.d/iptables.conf"
-I0528 00:32:07.443127    3662 file_writers.go:234] Writing file "/etc/kubernetes/static-pod-resources/keepalived/keepalived.conf.tmpl"
-I0528 00:32:07.459360    3662 file_writers.go:234] Writing file "/etc/kubernetes/static-pod-resources/keepalived/scripts/chk_default_ingress.sh.tmpl"                                                                              I0528 00:32:07.476355    3662 file_writers.go:234] Writing file "/etc/kubernetes/manifests/keepalived.yaml"
-I0528 00:32:07.497417    3662 file_writers.go:234] Writing file "/etc/node-sizing-enabled.env"
-I0528 00:32:07.512697    3662 file_writers.go:234] Writing file "/usr/local/sbin/dynamic-system-reserved-calc.sh"
-I0528 00:32:07.527891    3662 file_writers.go:234] Writing file "/etc/systemd/system.conf.d/kubelet-cgroups.conf"                                                                                                                  I0528 00:32:07.541945    3662 file_writers.go:234] Writing file "/etc/systemd/system/kubelet.service.d/20-logging.conf"
-I0528 00:32:07.557819    3662 file_writers.go:234] Writing file "/etc/NetworkManager/conf.d/sdn.conf"
-I0528 00:32:07.571817    3662 file_writers.go:234] Writing file "/usr/local/bin/nmstate-configuration.sh"
-...
-I0528 00:32:11.335623    3662 update.go:2277] Could not reset unit preset for ipsec.service, skipping. (Error msg: error running preset on unit: Failed to preset unit: Unit file ipsec.service does not exist.
-)
-I0528 00:32:11.335826    3662 file_writers.go:294] Writing systemd unit "kubelet-auto-node-size.service"
-I0528 00:32:11.352657    3662 file_writers.go:307] Disabling systemd unit kubelet-auto-node-size.service before re-writing it
-I0528 00:32:12.277828    3662 file_writers.go:294] Writing systemd unit "kubelet-dependencies.target"
-I0528 00:32:13.449716    3662 update.go:2240] Preset systemd unit "kubelet-dependencies.target"
-I0528 00:32:13.449961    3662 file_writers.go:208] Writing systemd unit dropin "01-kubens.conf"
-I0528 00:32:13.451414    3662 file_writers.go:194] Dropin for 10-mco-default-env.conf has no content, skipping write
-I0528 00:32:13.451534    3662 file_writers.go:201] Removing "/etc/systemd/system/kubelet.service.d/10-mco-default-env.conf", updated file has zero length
-I0528 00:32:13.451639    3662 file_writers.go:208] Writing systemd unit dropin "10-mco-on-prem-wait-resolv.conf"
-I0528 00:32:13.452385    3662 file_writers.go:208] Writing systemd unit dropin "10-mco-default-madv.conf"
-I0528 00:32:13.452877    3662 file_writers.go:294] Writing systemd unit "kubelet.service"
-I0528 00:32:13.473182    3662 file_writers.go:307] Disabling systemd unit kubelet.service before re-writing it
-I0528 00:32:14.612413    3662 file_writers.go:294] Writing systemd unit "kubens.service"
-I0528 00:32:14.635457    3662 file_writers.go:294] Writing systemd unit "machine-config-daemon-firstboot.service"
-I0528 00:32:14.655239    3662 file_writers.go:307] Disabling systemd unit machine-config-daemon-firstboot.service before re-writing it
-I0528 00:32:15.617185    3662 file_writers.go:294] Writing systemd unit "machine-config-daemon-pull.service"
-I0528 00:32:15.639073    3662 file_writers.go:307] Disabling systemd unit machine-config-daemon-pull.service before re-writing it
-I0528 00:32:16.912917    3662 file_writers.go:294] Writing systemd unit "nmstate-configuration.service"
-I0528 00:32:16.937426    3662 file_writers.go:307] Disabling systemd unit nmstate-configuration.service before re-writing it
-I0528 00:32:17.817179    3662 file_writers.go:294] Writing systemd unit "node-valid-hostname.service"
-I0528 00:32:17.835273    3662 file_writers.go:307] Disabling systemd unit node-valid-hostname.service before re-writing it
-I0528 00:32:19.184694    3662 file_writers.go:294] Writing systemd unit "nodeip-configuration-vsphere-upi.service"
-I0528 00:32:19.212256    3662 file_writers.go:294] Writing systemd unit "nodeip-configuration.service"
-I0528 00:32:19.240152    3662 file_writers.go:307] Disabling systemd unit nodeip-configuration.service before re-writing it
-I0528 00:32:20.606824    3662 file_writers.go:294] Writing systemd unit "on-prem-resolv-prepender.path"
-I0528 00:32:20.633426    3662 file_writers.go:307] Disabling systemd unit on-prem-resolv-prepender.path before re-writing it
-I0528 00:32:21.677791    3662 file_writers.go:294] Writing systemd unit "on-prem-resolv-prepender.service"
-I0528 00:32:21.701174    3662 file_writers.go:294] Writing systemd unit "ovs-configuration.service"
-I0528 00:32:21.719755    3662 file_writers.go:307] Disabling systemd unit ovs-configuration.service before re-writing it
-I0528 00:32:22.661998    3662 file_writers.go:208] Writing systemd unit dropin "10-ovs-vswitchd-restart.conf"
-I0528 00:32:23.742611    3662 update.go:2240] Preset systemd unit "ovs-vswitchd.service"
-I0528 00:32:23.742697    3662 file_writers.go:208] Writing systemd unit dropin "10-ovsdb-restart.conf"
-I0528 00:32:23.743951    3662 file_writers.go:194] Dropin for 10-mco-default-env.conf has no content, skipping write
-I0528 00:32:23.743994    3662 file_writers.go:201] Removing "/etc/systemd/system/rpm-ostreed.service.d/10-mco-default-env.conf", updated file has zero length
-I0528 00:32:24.749332    3662 update.go:2240] Preset systemd unit "rpm-ostreed.service"
-I0528 00:32:24.749397    3662 file_writers.go:294] Writing systemd unit "vsphere-hostname.service"
-I0528 00:32:24.769767    3662 file_writers.go:307] Disabling systemd unit vsphere-hostname.service before re-writing it
-I0528 00:32:25.851204    3662 file_writers.go:294] Writing systemd unit "wait-for-br-ex-up.service"
-I0528 00:32:25.881418    3662 file_writers.go:307] Disabling systemd unit wait-for-br-ex-up.service before re-writing it
-I0528 00:32:26.872295    3662 file_writers.go:294] Writing systemd unit "wait-for-ipsec-connect.service"
-I0528 00:32:26.898487    3662 file_writers.go:307] Disabling systemd unit wait-for-ipsec-connect.service before re-writing it
-I0528 00:32:27.864035    3662 file_writers.go:294] Writing systemd unit "wait-for-primary-ip.service"
-I0528 00:32:27.881444    3662 file_writers.go:307] Disabling systemd unit wait-for-primary-ip.service before re-writing it
-I0528 00:32:28.859024    3662 file_writers.go:208] Writing systemd unit dropin "mco-disabled.conf"
-I0528 00:32:28.880708    3662 update.go:2277] Could not reset unit preset for zincati.service, skipping. (Error msg: error running preset on unit: Failed to preset unit: Unit file zincati.service does not exist.
-)
-I0528 00:32:28.880761    3662 file_writers.go:294] Writing systemd unit "kubelet-cleanup.service"
-I0528 00:32:28.909934    3662 file_writers.go:307] Disabling systemd unit kubelet-cleanup.service before re-writing it
-I0528 00:32:31.013274    3662 update.go:2218] Enabled systemd units: [NetworkManager-clean-initrd-state.service firstboot-osupdate.target kubelet-auto-node-size.service kubelet.service machine-config-daemon-firstboot.service machine-config-daemon-pull.service nmstate-configuration.service node-valid-hostname.service nodeip-configuration.service on-prem-resolv-prepender.path openvswitch.service ovs-configuration.service ovsdb-server.service vsphere-hostname.service wait-for-br-ex-up.service wait-for-ipsec-connect.service wait-for-primary-ip.service kubelet-cleanup.service]
-I0528 00:32:31.994868    3662 update.go:2229] Disabled systemd units [kubens.service nodeip-configuration-vsphere-upi.service on-prem-resolv-prepender.service]
-I0528 00:32:31.995099    3662 update.go:1985] Deleting stale data
-I0528 00:32:31.995474    3662 update.go:2415] updating the permission of the kubeconfig to: 0o600
-I0528 00:32:31.995615    3662 update.go:2381] Checking if absent users need to be disconfigured
-I0528 00:32:32.047422    3662 update.go:2406] Password has been configured
-I0528 00:32:32.056314    3662 update.go:2817] Removing SIGTERM protection
 I0528 00:32:32.056432    3662 update.go:2786] "initiating reboot: Node will reboot into image image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:4f9960aacc27743cc08dcf1bacef86069acd00683fc9440915ec28945b35b4ba / MachineConfig rendered-worker-automount-72d38a6c7ad0b42b1106ee4cf27b5718"
 I0528 00:32:32.222114    3662 update.go:2786] "reboot successful"
 I0528 00:32:32.239273    3662 daemon.go:711] Node hub-v57jl-worker-0-5z4gs is queued for a reboot, skipping sync.
