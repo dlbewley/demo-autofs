@@ -205,11 +205,12 @@ This MCP will include MachineConfig resources from the existing worker role and 
 ```bash
 oc create -f machineconfigpool.yaml
 
+# no nodes in the worker-automount MCP
 oc get machineconfigpools
-NAME               CONFIG                                             UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-7cd94512cb01922e55fd3a8b985320f1   True      False      False      3              3                   3                     0                      6d
-worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718   True      False      False      6              6                   6                     0                      6d
-worker-automount                                                                                                                                                                      5s
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
+worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
+worker-automount   rendered-worker-automount-282653962a2d3a7860480d87467a48f7   True      False      False      0              0                   0                     0                      2d7h
 ```
 
 > [!NOTE]
@@ -312,139 +313,12 @@ worker-automount   rendered-worker-automount-31fcb7e2bf69aaeacc1da796f6d5678e   
 * Select a test node to work with.
 
 ```bash
-export TEST_WORKER=hub-v57jl-worker-0-8thc7
+export TEST_WORKER=hub-v57jl-worker-0-5z4gs
 ```
 
 * Adjust the `node-role.kubernetes.io` label on the test node so it will be configured by the "worker-auomount" pool which applies the layered image.
 
 ```bash
-oc label node $TEST_WORKER node-role.kubernetes.io/worker- node-role.kubernetes.io/worker-automount=''
-
-oc get mcp
-NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      6d3h
-worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      5              5                   5                     0                      6d3h
-worker-automount   rendered-worker-automount-31fcb7e2bf69aaeacc1da796f6d5678e   False     False      False      1              0                   0                     0                      3h13m
-```
-
-* Notice there is 1 machine in the worker-automount Machine Config Pool. 
-* Unpause the MCP to begin updating that machine
-
-```bash
-oc patch machineconfigpool/worker-automount \
-    --type merge --patch '{"spec":{"paused":false}}'
-
-oc get mcp worker-automount
-NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-worker-automount   rendered-worker-automount-31fcb7e2bf69aaeacc1da796f6d5678e   False     True       False      1              0                   0                     0                      3h15m
-
-oc get nodes $TEST_WORKER
-NAME                       STATUS                     ROLES              AGE     VERSION
-hub-v57jl-worker-0-8thc7   Ready,SchedulingDisabled   worker-automount   3h32m   v1.32.4
-```
-
-* Begin watching the Machine Config Daemon logs for this node in another terminal
-
-```bash
-oc get pods -n openshift-machine-config-operator -o wide | grep $TEST_WORKER
-kube-rbac-proxy-crio-hub-v57jl-worker-0-8thc7   1/1     Running   2 (3h31m ago)   3h30m   192.168.4.148   hub-v57jl-worker-0-8thc7   <none>           <none>
-machine-config-daemon-bwq89                     2/2     Running   0               3h30m   192.168.4.148   hub-v57jl-worker-0-8thc7   <none>           <none>
-
-oc logs -n openshift-machine-config-operator -f machine-config-daemon-bwq89
-...
-I0525 20:14:35.568123 3459 update.go:2741] Running: rpm-ostree cleanup -p
-Deployments unchanged.
-I0525 20:14:35.669725 3459 update.go:2693] Updating OS to layered image "image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:c0c5e5754d0dfc185d28f93c0f365c763bcb647b581c3f6bd3bd37a7f3dc5ba5"
-I0525 20:14:35.669796 3459 image_manager_helper.go:92] Running captured: rpm-ostree --version
-I0525 20:14:35.702277 3459 image_manager_helper.go:194] Linking rpm-ostree authfile to /etc/mco/internal-registry-pull-secret.json
-I0525 20:14:35.702360 3459 rpm-ostree.go:183] Executing rebase to image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:c0c5e5754d0dfc185d28f93c0f365c763bcb647b581c3f6bd3bd37a7f3dc5ba5
-I0525 20:14:35.702387 3459 update.go:2741] Running: rpm-ostree rebase --experimental ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:c0c5e5754d0dfc185d28f93c0f365c763bcb647b581c3f6bd3bd37a7f3dc5ba5
-Pulling manifest: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:c0c5e5754d0dfc185d28f93c0f365c763bcb647b581c3f6bd3bd37a7f3dc5ba5
-Importing: ostree-unverified-registry:image-registry.openshift-image-registry.svc:5000/openshift-machine-config-operator/os-image@sha256:c0c5e5754d0dfc185d28f93c0f365c763bcb647b581c3f6bd3bd37a7f3dc5ba5 (digest: sha256:c0c5e5754d0dfc185d28f93c0f365c763bcb647b581c3f6bd3bd37a7f3dc5ba5)
-ostree chunk layers already present: 51
-custom layers already present: 2
-custom layers needed: 2 (18.0?MB)
-[0/2] Fetching layer 55fc5bbdeea1d9e6854 (1.4 MB)...done
-[1/2] Fetching layer 9cbe6a42d812decb3ef (16.6 MB)...done
-Staging deployment...done
-Added:
-autofs-1:5.1.7-60.el9.x86_64
-libsss_autofs-2.9.6-4.el9_6.2.x86_64
-openldap-clients-2.6.8-4.el9.x86_64
-Changes queued for next boot. Run "systemctl reboot" to start a reboot
-...
-```
-
-## Applying the MachineConfigs to Configure and Enable Automountd
-
-> [!WARNING]
-> **Do not apply theese MachineConfigs until _after_ the node is running the new image.**
-> 🐛 Bug [OCPBUGS-56648](https://issues.redhat.com/browse/OCPBUGS-56648)
-
-Use a MachineConfig resources to enable autofs and apply the necessary [configuration files](scripts/) to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
-
-> [!IMPORTANT]
-> CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
-
-* Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary.
-
-```bash
-make -C machineconfigs
-```
-
-* Adjust the role label in the [kustomization.yaml](machineconfigs/kustomization.yaml) if necessary to match the desired machineconfigpool (_worker-automount_).
-
-* Apply all of the [machineconfigs](machineconfigs/kustomization.yaml) using kustomize or just `oc apply` the individual YAMLs.
-
-```bash
-oc apply -k machineconfigs
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs created
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
-machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
-```
-
-* This will cause another image build and reboot of the node as the MachineConfigPool is updated.
-
-# Debugging
-
-### Workaround Testing 2025-05-27
-
-It seems if we let the image apply without any related Machineconfigs we will avoid the above. This means an additional image build and reboot is needed.
-
-```bash
-# remove all machineconfigs from the worker-automount MCP
-oc delete -k machineconfigs
-machineconfig.machineconfiguration.openshift.io "99-worker-automount-autofs" deleted
-machineconfig.machineconfiguration.openshift.io "99-worker-automount-nfs-homedir-setsebool" deleted
-machineconfig.machineconfiguration.openshift.io "99-worker-automount-sssd" deleted
-
-# don't forget cruft machineconfigs created before
-oc delete machineconfigs -l machineconfiguration.openshift.io/role=worker-automount
-machineconfig.machineconfiguration.openshift.io "99-worker-automount-autofs-service" deleted
-machineconfig.machineconfiguration.openshift.io "99-worker-automount-sssd-config" deleted
-
-
-# no nodes in the worker-automount MCP
-oc get mcp
-NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
-master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
-worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
-worker-automount   rendered-worker-automount-282653962a2d3a7860480d87467a48f7   True      False      False      0              0                   0                     0                      2d7h
-
-oc get nodes
-NAME                       STATUS   ROLES                  AGE    VERSION
-hub-v57jl-master-0         Ready    control-plane,master   8d     v1.32.4
-hub-v57jl-master-1         Ready    control-plane,master   8d     v1.32.4
-hub-v57jl-master-2         Ready    control-plane,master   8d     v1.32.4
-hub-v57jl-store-1-wqqb7    Ready    infra,worker           8d     v1.32.4
-hub-v57jl-store-2-2hhjk    Ready    infra,worker           8d     v1.32.4
-hub-v57jl-store-3-q42r2    Ready    infra,worker           8d     v1.32.4
-hub-v57jl-worker-0-4pgbn   Ready    worker                 9h     v1.32.4
-hub-v57jl-worker-0-5z4gs   Ready    worker                 2d1h   v1.32.4
-hub-v57jl-worker-0-vcl9c   Ready    worker                 9h     v1.32.4
-
-# label a node and wait to see if it gets the new image applied successfully
-export TEST_WORKER=hub-v57jl-worker-0-5z4gs
 oc label node $TEST_WORKER node-role.kubernetes.io/worker- node-role.kubernetes.io/worker-automount=''
 
 oc get mcp
@@ -466,18 +340,31 @@ hub-v57jl-worker-0-4pgbn   Ready    worker                 9h     v1.32.4
 hub-v57jl-worker-0-5z4gs   Ready    worker-automount       2d1h   v1.32.4
 hub-v57jl-worker-0-v6snn   Ready    worker                 5m7s   v1.32.4
 hub-v57jl-worker-0-vcl9c   Ready    worker                 9h     v1.32.4
-
-# watch mcd logs
-oc get pods -o wide -n openshift-machine-config-operator | grep $TEST_WORKER
-kube-rbac-proxy-crio-hub-v57jl-worker-0-5z4gs                   1/1     Running   3 (2d1h ago)    2d1h    192.168.4.151   hub-v57jl-worker-0-5z4gs   <none>           <none>
-machine-config-daemon-ts6hl                                     2/2     Running   0               2d1h    192.168.4.151   hub-v57jl-worker-0-5z4gs   <none>           <none>
-
-oc logs -f machine-config-daemon-ts6hl -n openshift-machine-config-operator -f
 ```
 
-* it takes a handful of minutes before the node was cordoned i think a machineosbuild may have occured
+* Notice there is 1 machine in the worker-automount Machine Config Pool. 
+* Unpause the MCP to begin updating that machine
 
 ```bash
+oc patch machineconfigpool/worker-automount \
+    --type merge --patch '{"spec":{"paused":false}}'
+
+oc get mcp worker-automount
+NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
+worker-automount   rendered-worker-automount-31fcb7e2bf69aaeacc1da796f6d5678e   False     True       False      1              0                   0                     0                      3h15m
+```
+
+* Begin watching the Machine Config Daemon logs for this node in another terminal
+
+```bash
+oc get pods -n openshift-machine-config-operator -o wide | grep $TEST_WORKER
+kube-rbac-proxy-crio-hub-v57jl-worker-0-8thc7   1/1     Running   2 (3h31m ago)   3h30m   192.168.4.148   hub-v57jl-worker-0-8thc7   <none>           <none>
+machine-config-daemon-bwq89                     2/2     Running   0               3h30m   192.168.4.148   hub-v57jl-worker-0-8thc7   <none>           <none>
+```
+
+```bash
+oc logs -n openshift-machine-config-operator -f machine-config-daemon-bwq89
+
 I0528 00:26:42.801086    3662 certificate_writer.go:294] Certificate was synced from controllerconfig resourceVersion 9501408
 W0528 00:28:29.865693    3662 daemon.go:2738] Unable to check manifest for matching hash: error parsing image name "docker://quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526": invalid image name "docker://quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bb63b13cb9cd0b8c4398f17498f004aff2e7ad770f28c84dc532069ae3a76526", unknown transport "docker"
 I0528 00:28:29.865723    3662 image_manager_helper.go:92] Running captured: rpm-ostree kargs
@@ -556,7 +443,38 @@ sh-5.1# rpm -q autofs
 autofs-5.1.7-60.el9.x86_64
 ```
 
-* Now apply the machineconfigs to enable autofs
+## Applying the MachineConfigs to Configure and Enable Automountd
+
+> [!WARNING]
+> **Do not apply theese MachineConfigs until _after_ the node is running the new image.**
+> 🐛 Bug [OCPBUGS-56648](https://issues.redhat.com/browse/OCPBUGS-56648)
+
+Use a MachineConfig resources to enable autofs and apply the necessary [configuration files](scripts/) to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
+
+> [!IMPORTANT]
+> CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
+
+* Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary.
+
+```bash
+make -C machineconfigs
+```
+
+* Adjust the role label in the [kustomization.yaml](machineconfigs/kustomization.yaml) if necessary to match the desired machineconfigpool (_worker-automount_).
+
+* Apply all of the [machineconfigs](machineconfigs/kustomization.yaml) using kustomize or just `oc apply` the individual YAMLs.
+
+```bash
+oc apply -k machineconfigs
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
+machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
+```
+
+* This will cause another image build and reboot of the node as the MachineConfigPool is updated.
+
+* it takes a handful of minutes before the node was cordoned i think a machineosbuild may have occured
+
 
 ```bash
  oc apply -k machineconfigs
@@ -564,7 +482,7 @@ machineconfig.machineconfiguration.openshift.io/99-worker-automount-autofs creat
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-nfs-homedir-setsebool created
 machineconfig.machineconfiguration.openshift.io/99-worker-automount-sssd created
 
-ioc get mcp
+oc get mcp
 NAME               CONFIG                                                       UPDATED   UPDATING   DEGRADED   MACHINECOUNT   READYMACHINECOUNT   UPDATEDMACHINECOUNT   DEGRADEDMACHINECOUNT   AGE
 master             rendered-master-7cd94512cb01922e55fd3a8b985320f1             True      False      False      3              3                   3                     0                      8d
 worker             rendered-worker-72d38a6c7ad0b42b1106ee4cf27b5718             True      False      False      6              6                   6                     0                      8d
