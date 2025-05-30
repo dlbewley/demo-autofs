@@ -121,6 +121,7 @@ oc create secret docker-registry push-secret \
 
 > [!NOTE]
 > Verify the expiration on the token just created:
+>
 > `oc extract secret/push-secret -n openshift-machine-config-operator --to=- | jq -r '.auths."image-registry.openshift-image-registry.svc:5000".auth' | base64 -d | cut -d. -f2 | base64 -d`
 > 
 > {"aud":["https://kubernetes.default.svc"],"exp":1810409199,"iat":1748201199,"iss":"https://kubernetes.default.svc","jti":"f47fdbe6-575b-4187-a678-74839a63ca06","kubernetes.io":{"namespace":"openshift-machine-config-operator","serviceaccount":{"name":"builder","uid":"7f114eb8-da6b-4be1-8bc4-6c9e9119a252"}},"nbf":1748201199,"sub":"system:serviceaccount:openshift-machine-config-operator:builder"}%
@@ -149,7 +150,7 @@ cat pull-secret.json| jq '.auths|keys[]'
 "registry.redhat.io"
 ```
 
-* Combine the global pull secret and the just created push secret into a new pull secret. Refer to this secret in the `MachineOSConfig.spec.baseImagePullSecret` later.
+* Combine the global pull secret and the just created push secret into a new pull secret.
 
 ```bash
 jq -s '.[0] * .[1]' pull-secret.json push-secret.json > pull-and-push-secret.json
@@ -166,6 +167,8 @@ oc create secret generic pull-and-push-secret \
   --from-file=.dockerconfigjson=pull-and-push-secret.json \
   --type=kubernetes.io/dockerconfigjson
 ```
+
+* Refer to this combined secret in the `MachineOSConfig.spec.baseImagePullSecret`.
 
 * Confirm the pull secret references in  [machineosconfig.yaml](machineosconfig.yaml). 
 
@@ -191,12 +194,12 @@ renderedImagePushSecret:
 >
 > * Ensure that the custom image is applied and running on a node first
 > * Only then, apply the machineconfigs that require the custom image
-> * It may be best to creae a transitory `worker-imaging` MCP that nodeas pass through just for the image swap
+> * It may be best to create a transitory MCP called `worker-imaging` that nodeas pass through just for the image swap
 > * Using 2 MCP also means 2 machineosconfigs and 2 image builds
 
-## Creating MachineConfigPool and MachineOSConfig
+## Creating the MachineConfigPool and MachineOSConfig
 
-The [`MachineOSConfig`](machineosconfig.yaml) resource defines how to build the layered CoreOS image. It is assocatied with a MachineConfigPool to target the machines that should run the image.
+The [MachineOSConfig](machineosconfig.yaml) resource defines how to build the layered CoreOS image. It is assocatied with a MachineConfigPool to target the machines that should run the image.
 
 * Create [worker-automount machineconfigpool](machineconfigpool.yaml) to use for initial testing of the image build. Ensure the MCP is initially **paused**.
 
@@ -230,7 +233,7 @@ oc get secrets -n openshift-machine-config-operator | grep entitle
 etc-pki-entitlement-worker-automount        Opaque                                2      2s
 ```
 
-* A Job in the openshift-machine-config-operator namespace defined by the machineosconfig will create a pod to perform the build and a `MachineOSBuild` to track the build.
+* A Job in the openshift-machine-config-operator namespace will create a pod to perform the build and a `MachineOSBuild` to track the build.
 
 ```bash
 oc get jobs -n openshift-machine-config-operator
@@ -278,9 +281,6 @@ oc get machineosbuild -n openshift-machine-config-operator
 NAME                                                PREPARED   BUILDING   SUCCEEDED   INTERRUPTED   FAILED   AGE
 worker-automount-5d5651f25efcbf89dd1d2874ad05c8c1   False      False      True        False         False    11m
 ```
-
-> [!NOTE]
-> Creating or modifying MachineConfigs will always trigger a new MachineOSBuild.
 
 ## Applying the Layered Image to Nodes
 
@@ -409,7 +409,7 @@ I0528 00:32:32.560334    3662 daemon.go:3044] Daemon logs from /var/log/pods/ope
 I0528 00:32:32.560597    3662 daemon.go:1420] Shutting down MachineConfigDaemon
 ```
 
-* After node reboot
+* After node reboot make sure node is Ready and MCP is not degraded
 
 ```bash
  oc get mcp
@@ -430,7 +430,11 @@ hub-v57jl-worker-0-4pgbn   Ready    worker                 9h     v1.32.4
 hub-v57jl-worker-0-5z4gs   Ready    worker-automount       2d2h   v1.32.4
 hub-v57jl-worker-0-v6snn   Ready    worker                 18m    v1.32.4
 hub-v57jl-worker-0-vcl9c   Ready    worker                 9h     v1.32.4
+```
 
+* Login and confirm the autofs RPM added to the custom image is present
+
+```bash
 oc debug node/hub-v57jl-worker-0-5z4gs
 Starting pod/hub-v57jl-worker-0-5z4gs-debug-wxrm6 ...
 To use host binaries, run `chroot /host`. Instead, if you need to access host namespaces, run `nsenter -a -t 1`.
@@ -447,7 +451,11 @@ autofs-5.1.7-60.el9.x86_64
 
 > [!WARNING]
 > **Do not apply theese MachineConfigs until _after_ the node is running the new image.**
+>
 > 🐛 Bug [OCPBUGS-56648](https://issues.redhat.com/browse/OCPBUGS-56648)
+
+> [!NOTE]
+> Creating or modifying MachineConfigs will always trigger a new MachineOSBuild.
 
 Use a MachineConfig resources to enable autofs and apply the necessary [configuration files](scripts/) to the nodes.  These should be associated with the just created `worker-automount` machine config pool.
 
@@ -505,9 +513,6 @@ nfs:/exports/home/dale   29G  2.0G   27G   7% /var/home/dale
 
 After above is successful, `$TEST_WORKER` reboots and begins running a custom image with autofs installed and configured.
 
-> [!NOTE]
-> These results are from 05-22-25 when everything worked.
-
 Once the node has successfully applied the custom layered image, confirm autofs functionality.
 
 ```bash
@@ -533,6 +538,7 @@ nfs:/exports/home/dale   29G  1.8G   27G   7% /var/home/dale
 
 # Cleanup
 
+* Undo all the changes to re-test
 ```bash
 export TEST_WORKER=hub-v57jl-worker-0-99mcp
 
