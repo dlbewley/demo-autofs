@@ -1,0 +1,44 @@
+---
+# https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    demo: hostpath-volume
+  name: demo-hostpath-volume
+  description: "Mount a hostpath volume into a pod. That path may have been automounted via NFS"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      demo: hostpath-volume
+  template:
+    metadata:
+      labels:
+        demo: hostpath-volume
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker-automount: ""
+      serviceAccountName: automount
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        # fsGroup: 1001
+        # supplementalGroups: []
+      containers:
+        - image: registry.k8s.io/e2e-test-images/agnhost:2.40
+          name: agnhost
+          args:
+            - test-webserver
+            - --port
+            - "8080"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /data
+              name: hostpath-volume
+      volumes:
+        - name: hostpath-volume
+          hostPath:
+            path: /home/dale
+            type: Directory 

@@ -2,10 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # override machineconfigpool name here if necessary
-commonLabels:
-  machineconfiguration.openshift.io/role: worker-automount
+labels:
+- includeSelectors: true
+  pairs:
+    machineconfiguration.openshift.io/role: worker-automount
 
 resources:
-  - 99-worker-automount-nfs-homedir-setsebool.yaml
-  - 99-worker-automount-sssd.yaml
-  - 99-worker-automount-autofs.yaml
+- 99-worker-automount-nfs-homedir-setsebool.yaml
+- 99-worker-automount-sssd.yaml
+- 99-worker-automount-autofs.yaml
+
