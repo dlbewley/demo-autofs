@@ -137,8 +137,7 @@ pei "oc wait machineosbuild -l machineconfiguration.openshift.io/machine-os-conf
 p
 
 p "# 📷 machines added to worker-automount pool run this custom image"
-pei "oc get mcp worker-automount -o jsonpath='{.spec.configuration.name}'"
+pei "oc get mcp worker-automount"
 RENDERED_MC=$(oc get mcp worker-automount -o jsonpath='{.spec.configuration.name}')
-p "oc get mc \$RENDERED_MC -o yaml | yq '.spec | with_entries(select(.key | contains(\"Image\")))'"
-oc get mc $RENDERED_MC -o yaml | yq '.spec | with_entries(select(.key | contains("Image")))'
+pei "oc get mc $RENDERED_MC -o yaml | yq '.spec | with_entries(select(.key | contains(\"Image\")))'"
 p
