@@ -185,6 +185,8 @@ renderedImagePushSecret:
   name: push-secret
 ```
 
+[![asciicast](https://asciinema.org/a/721881.svg)](https://asciinema.org/a/721881)
+
 # Deployment
 
 > [!WARNING]
@@ -220,7 +222,7 @@ worker-automount   rendered-worker-automount-282653962a2d3a7860480d87467a48f7   
 > **Entitlements**
 >
 > Entitlement to download RPMs are enabled by an automatic copy of the `etc-pki-entitlement` secret from the `openshift-config-managed` namespace into the openshift-machine-config-operator namespace.
-> Your cluster global pull secret must have proper entitlement to pass on to the nodes.
+> Your cluster global pull secret must have proper entitlement to pass on to the nodes. I _believe_ this is conveyed by having a RHN login associated with a support contract.
 
 * Create the [`MachineOSConfig`](machineosconfig.yaml) to define and begin the image build.
 
@@ -281,6 +283,8 @@ oc get machineosbuild -n openshift-machine-config-operator
 NAME                                                PREPARED   BUILDING   SUCCEEDED   INTERRUPTED   FAILED   AGE
 worker-automount-5d5651f25efcbf89dd1d2874ad05c8c1   False      False      True        False         False    11m
 ```
+
+[![asciicast](https://asciinema.org/a/722700.svg)](https://asciinema.org/a/722700)
 
 ## Applying the Layered Image to Nodes
 
