@@ -1,13 +1,13 @@
 # Using CoreOS Image Layering to run automountd on OpenShift Nodes
 
-RHEL CoreOS is a container optimized operating system which is distributed via a container image. Typically one does not install software directly into the host operating system, but instead from pulled images running in containers.
+RHEL CoreOS is a container optimized operating system which is distributed via a container image. Typically software will not be installed directly into the host operating system, but instead provided in images running in containers.
 
 The [RHCOS Image Layering](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/machine_configuration/mco-coreos-layering) feature of OpenShift allows to the ability to install software at the host level in a manner compatible with the automated node lifecycle management performed by OpenShift.
 
 > [!IMPORTANT]
 > On cluster image layering is TP as of 4.18 and anticipated to GA in 4.19.
 >
-> Draft 4.19 docs:
+> **Draft 4.19 docs:**
 >
 > * https://issues.redhat.com/browse/OSDOCS-13346
 > * https://87486--ocpdocs-pr.netlify.app/openshift-enterprise/latest/machine_configuration/mco-coreos-layering.html
@@ -41,7 +41,7 @@ To apply a custom layered image to your cluster by using the on-cluster build pr
 
 ## OpenShift 4.19
 
-* ✅ Testing on OpenShift 4.19rc2 MachineOSConfig v1 was successful. (Caveat [this bug](https://issues.redhat.com/browse/OCPBUGS-56648))
+* ✅ Testing on OpenShift 4.19rc2 & 4.19rc4 MachineOSConfig v1 was successful. (Caveat [this bug](https://issues.redhat.com/browse/OCPBUGS-56648))
 * ❌ Testing on OpenShift 4.18.10 MachineOSConfig v1alpha1 was not successful.
 
 ## Provisioning an Image Registry to hold layered image
@@ -52,7 +52,7 @@ Identify a registry or [enable the on-cluster registry](https://docs.redhat.com/
 > Using the on-cluster image registry.
 > Adapt if using an external registry.
 
-* Create a PVC on non-default SC for Image Registry storage
+* If necessary, create a PVC on a non-default StorageClass (eg ocs-storagecluster-cephfs) for the OpenShift Image Registry storage
 
 ```bash
 $ cat <<EOF | oc create -f -
@@ -72,7 +72,7 @@ spec:
 EOF
 ```
 
-* Enable the on cluster registry using the above PVC. 
+* Enable the on cluster registry with the above PVC. 
 
 ```bash
 # Enable registry - if none exists outside cluster
@@ -82,12 +82,12 @@ $ oc patch configs.imageregistry.operator.openshift.io cluster \
 $ oc patch configs.imageregistry.operator.openshift.io cluster \
     --type merge --patch '{"spec":{"storage":{"pvc":{"claim":"image-registry-storage-cephfs"}}}}'
 
-# account for pvc
+# account for single replica, non-rolling deployment
 $ oc patch configs.imageregistry.operator.openshift.io cluster \
     --type merge --patch '{"spec":{"rolloutStrategy":"Recreate"}}'
 ```
 
-* Optionally [expose the registry](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/registry/securing-exposing-registry#securing-exposing-registry) for testing pulls off-cluster.
+* Optionally [expose the registry](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/registry/securing-exposing-registry#securing-exposing-registry) for testing pulls from off-cluster if desired.
 
 ```bash
 # Expose registry
