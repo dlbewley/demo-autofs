@@ -13,7 +13,7 @@ spec:
       files:
         - contents:
             compression: gzip
-            source: data:;base64,H4sIAAAAAAAC/0yOsa6DMAxFd77iSuxkf9uTOnboL7jENC4kRokTfr8CJFoPlu6Vjn16TLLwHxzb6KiaDpGKcR78mYJG7nosqjPqij3CSy7YxIIkuEbZHW0TggXGgTXKRynJS+bREGmFJNxv/4+uh2CH530XjJTwrsXwUpjieoukGyyQXWej1mQFgRrjyZxQJK6LTMK++4qc86vxCQAA//+ZKblh5QAAAA==
+            source: data:;base64,H4sIAAAAAAAC/0yOwWqAMAyG7z7FD16Hve828Dhwh71AZuOaaRtp0/r6QwW3HAL/D1/y9Vhk41c4ttlRNR0iFeM8+DsFjdz12FRX1B1nhJdccIgFSXCNsrvaJgQLjAtrlK9SkpfMsyHSDkl4H98+uh6CE17PXTBTwk8thm+FKZ63SHrAAtlzNmpNVhCoMb6YE4rEfZNF2L/gcxqn7k/nnv8yvwEAAP//jPzdr+sAAAA=
           mode: 384
           path: /etc/auto.master.d/auto.home
           user:
