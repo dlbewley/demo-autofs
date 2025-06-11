@@ -1,1 +1,1 @@
-99-worker-automount-autofs.yaml: 99-worker-automount-autofs.bu ../scripts/auto.home
+99-worker-automount-autofs.yaml: butane/99-worker-automount-autofs.bu ../scripts/auto.home
