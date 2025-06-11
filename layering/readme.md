@@ -451,6 +451,8 @@ sh-5.1# rpm -q autofs
 autofs-5.1.7-60.el9.x86_64
 ```
 
+[![asciicast](https://asciinema.org/a/722913.svg)](https://asciinema.org/a/722913)
+
 ## Applying the MachineConfigs to Configure and Enable Automountd
 
 > [!WARNING]
