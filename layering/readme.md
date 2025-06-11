@@ -468,7 +468,7 @@ Use a MachineConfig resources to enable autofs and apply the necessary [configur
 > [!IMPORTANT]
 > CoreOS uses `/var/home` for user home dirs. We (configure sssd to override)[scripts/homedir.conf] the path returned from LDAP before mounting.
 
-* Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary.
+* Ensure that [butane `*.bu` files](machineconfigs/) and the included [scripts](scripts/) are up to date, and regenerate if necessary. See also this [blog post](http://guifreelife.com/blog/2025/05/29/Managing-OpenShift-Machine-Configuration-with-Butane-and-Ignition/).
 
 ```bash
 make -C machineconfigs
@@ -515,6 +515,8 @@ Filesystem              Size  Used Avail Use% Mounted on
 nfs:/exports/home/dale   29G  2.0G   27G   7% /var/home/dale
 ```
 
+[![asciicast](https://asciinema.org/a/722936.svg)](https://asciinema.org/a/722936)
+
 # Testing AutoFS
 
 After above is successful, `$TEST_WORKER` reboots and begins running a custom image with autofs installed and configured.
@@ -541,6 +543,10 @@ uid=1001(dale) gid=1001(dale) groups=1001(dale) context=unconfined_u:unconfined_
 Filesystem              Size  Used Avail Use% Mounted on
 nfs:/exports/home/dale   29G  1.8G   27G   7% /var/home/dale
 ```
+
+> [!WARNING]
+>️ ssh as core doesn't work yet due to squashed home dir, use oc debug/node as root as workaround
+
 
 # Cleanup
 
