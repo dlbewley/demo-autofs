@@ -21,7 +21,7 @@ configMapGenerator:
       - scripts/home.exports
 
 secretGenerator:
-  - name: cloudinitdisk-client
+  - name: cloudinitdisk-nfs
     files:
       - scripts/userData
 
@@ -61,7 +61,7 @@ patches:
         path: /spec/template/spec/volumes/1/cloudInitNoCloud
         value: {
           "secretRef": {
-            "name": "cloudinitdisk-client"
+            "name": "cloudinitdisk-nfs"
           }
         }
 
