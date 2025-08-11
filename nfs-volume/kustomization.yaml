@@ -8,10 +8,9 @@ labels:
     pairs:
       demo: nfs-volume
 
+components:
+  - ../components/automount-role/
 
 resources:
   - namespace.yaml
-  - serviceaccount.yaml
-  - role.yaml
-  - rolebinding.yaml
   - deployment.yaml
