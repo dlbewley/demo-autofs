@@ -70,7 +70,7 @@ core:x:1000:1000:CoreOS Admin:/var/home/core:/bin/bash
 
 # Autofs Image Building
 
-> [!NOTE] 
+> [!NOTE]
 > These RPMs are already installed on a OCP 4.18 node:
 >
 > - nfs-utils-2.5.4-26.el9_4.1.x86_64
@@ -164,11 +164,11 @@ Work towards automounting of home dirs.
 
 * ✅ `getent passwd dale`
 
-## Automount Pod Test Plan 
+## Automount Pod Test Plan
 
 **Test 2 - getent passwd via LDAP**
 
-* ✅ `getent passwd dale` 
+* ✅ `getent passwd dale`
 
 * Required fixes so far:
    * Mount /var/lib/sss into pod
