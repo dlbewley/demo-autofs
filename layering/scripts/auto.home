@@ -1,4 +1,3 @@
 # file: /etc/auto.master.d/auto.home
-# look up home dirs within /var/home via the auto.varhome indirect map in LDAP
-# i think this can just go to auto.home now that the automounts have been simplified, TODO
-/var/home       auto.varhome
+# look up home dirs within cn=/home via the auto.varhome indirect map in LDAP
+/home       auto.varhome
