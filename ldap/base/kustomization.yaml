@@ -33,6 +33,7 @@ secretGenerator:
 
 resources:
   - namespace.yaml
+  - multinetworkpolicy.yaml
 
 patches:
 
