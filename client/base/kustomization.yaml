@@ -8,6 +8,7 @@ labels:
   - includeSelectors: true
     pairs:
       demo: client
+      app.kubernetes.io/instance: demo-autofs-client
 
 components:
   - ../../components/argocd-management

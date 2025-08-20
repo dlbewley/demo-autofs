@@ -8,6 +8,7 @@ labels:
   - includeSelectors: true
     pairs:
       demo: ldap
+      app.kubernetes.io/instance: demo-autofs-ldap
 
 components:
   - ../../components/argocd-management
