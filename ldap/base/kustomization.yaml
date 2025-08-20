@@ -10,6 +10,7 @@ labels:
       demo: ldap
 
 components:
+  - ../../components/argocd-management
   - ../../components/vms/ldap
 
 generatorOptions:

@@ -10,6 +10,7 @@ labels:
       demo: nfs
 
 components:
+  - ../../components/argocd-management
   - ../../components/vms/nfs
 
 generatorOptions:

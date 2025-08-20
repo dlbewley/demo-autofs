@@ -10,6 +10,7 @@ labels:
       demo: client
 
 components:
+  - ../../components/argocd-management
   - ../../components/vms/client
 
 generatorOptions:
