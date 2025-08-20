@@ -11,7 +11,7 @@ labels:
       app.kubernetes.io/instance: demo-autofs-client
 
 components:
-  - ../../components/argocd-management
+  - ../../components/argocd-vm-management
   - ../../components/vms/client
 
 generatorOptions:
