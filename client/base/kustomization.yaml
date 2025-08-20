@@ -8,8 +8,10 @@ labels:
   - includeSelectors: true
     pairs:
       demo: client
+      app.kubernetes.io/instance: demo-autofs-client
 
 components:
+  - ../../components/argocd-vm-management
   - ../../components/vms/client
 
 generatorOptions:
@@ -30,6 +32,16 @@ resources:
   - namespace.yaml
 
 patches:
+  # i wish to manually handle updates to this secret for now
+  - target:
+      kind: Secret
+      name: cloudinitdisk-client
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/hook: Skip
+          argocd.argoproj.io/sync-options: Prune=false
 
   - target:
       group: kubevirt.io

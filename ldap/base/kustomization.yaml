@@ -8,8 +8,10 @@ labels:
   - includeSelectors: true
     pairs:
       demo: ldap
+      app.kubernetes.io/instance: demo-autofs-ldap
 
 components:
+  - ../../components/argocd-management
   - ../../components/vms/ldap
 
 generatorOptions:
@@ -36,6 +38,16 @@ resources:
   - multinetworkpolicy.yaml
 
 patches:
+  # i wish to manually handle updates to this secret for now
+  - target:
+      kind: Secret
+      name: cloudinitdisk-ldap
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/hook: Skip
+          argocd.argoproj.io/sync-options: Prune=false
 
   - target:
       group: kubevirt.io

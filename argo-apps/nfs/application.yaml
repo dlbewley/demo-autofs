@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-autofs-nfs
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "12"
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc'
+  sources:
+    - repoURL: 'https://github.com/dlbewley/demo-autofs'
+      targetRevision: feature/gitops
+      path: nfs/base
+  project: default
+  syncPolicy:
+    automated:
+      prune: false
+      allowEmpty: true

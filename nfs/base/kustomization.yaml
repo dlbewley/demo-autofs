@@ -8,8 +8,10 @@ labels:
   - includeSelectors: true
     pairs:
       demo: nfs
+      app.kubernetes.io/instance: demo-autofs-nfs
 
 components:
+  - ../../components/argocd-management
   - ../../components/vms/nfs
 
 generatorOptions:
@@ -29,6 +31,16 @@ resources:
   - namespace.yaml
 
 patches:
+  # i wish to manually handle updates to this secret for now
+  - target:
+      kind: Secret
+      name: cloudinitdisk-nfs
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/hook: Skip
+          argocd.argoproj.io/sync-options: Prune=false
 
   - target:
       group: kubevirt.io
