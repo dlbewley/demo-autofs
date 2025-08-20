@@ -29,6 +29,16 @@ resources:
   - namespace.yaml
 
 patches:
+  # i wish to manually handle updates to this secret for now
+  - target:
+      kind: Secret
+      name: cloudinitdisk-nfs
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          argocd.argoproj.io/hook: Skip
+          argocd.argoproj.io/sync-options: Prune=false
 
   - target:
       group: kubevirt.io
