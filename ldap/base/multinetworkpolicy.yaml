@@ -1,0 +1,47 @@
+---
+# https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/virtualization/networking#virt-connecting-vm-to-secondary-udn
+# selectors are not supported for secondary localnet networks. ipBlock must be used.
+apiVersion: k8s.cni.cncf.io/v1beta1
+kind: MultiNetworkPolicy
+metadata:
+  annotations:
+    k8s.v1.cni.cncf.io/policy-for: default/vlan-1924
+  name: demo-ldap-ingress
+  namespace: demo-ldap
+spec:
+  podSelector: {}
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    # allow from all to dhcpclient
+    - from:
+      ports:
+        - port: 67
+          protocol: UDP
+        - port: 68
+          protocol: UDP
+
+    # allow from wifi and lab network to ldap service
+    - from:
+        - ipBlock:
+            cidr: 192.168.3.0/24
+            except: []
+        - ipBlock:
+            cidr: 192.168.4.0/24
+            except: []
+      ports:
+        - port: 389
+          protocol: TCP
+        - port: 636
+          protocol: TCP
+
+    # allow from wifi network to ssh service
+    - from:
+        - ipBlock:
+            cidr: 192.168.3.0/24
+            except: []
+      ports:
+        - port: 22
+          protocol: TCP

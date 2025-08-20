@@ -22,9 +22,10 @@ packages:
 mounts:
   - [ /dev/disk/by-id/virtio-ldap-ldif, /opt, iso9660, 'defaults' ]
 
-# https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 runcmd:
-  - [dnf, install, -y, https://rpmfind.net/linux/epel/9/Everything/x86_64/Packages/o/openldap-servers-2.6.6-3.el9.x86_64.rpm]
+  - [dnf, install, -y, https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm]
+  - [rpm, --import, /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-9]
+  - [dnf, install, -y, openldap-servers]
   - [systemctl, daemon-reload]
   - [systemctl, enable, slapd.service]
   - [systemctl, start, slapd.service]
