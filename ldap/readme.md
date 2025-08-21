@@ -10,7 +10,7 @@ virctl start -n demo-ldap ldap
 
 This namespace has a [MultiNetworkPolicy](multinetworkpolicy.yaml) attached to it which permits only selective access to services on the LDAP server.
 
-MultiNetworkPolicy must be enabled on the OpenShift cluster first and may then be used for secondary network attachments. Localnet VLAN 1924 in this case. Because we are using localnet topology we can not use pod selectors and most discriminate based on IP address. [Other secondary network topologies can](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/multiple_networks/secondary-networks#compatibility-with-multi-network-policy_configuring-additional-network-ovnk) use selectors as long as they also include a subnet field.
+MultiNetworkPolicy must be enabled on the OpenShift cluster first and may then be used for secondary network attachments. Localnet VLAN 1924 in this case. Because we are using localnet topology we can not use pod selectors and must discriminate based on IP address. [Other secondary network topologies can](https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/multiple_networks/secondary-networks#compatibility-with-multi-network-policy_configuring-additional-network-ovnk) use selectors as long as they also include a subnet field.
 
 ```yaml
 ---

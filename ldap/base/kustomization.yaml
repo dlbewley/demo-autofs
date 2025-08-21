@@ -71,7 +71,7 @@ patches:
           }
         }
       - op: replace
-        path: /spec/RunStrategy
+        path: /spec/runStrategy
         value: Always
 
       # add volumes for secret and configmap
