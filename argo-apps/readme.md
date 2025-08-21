@@ -25,6 +25,7 @@ oc apply -k argo-apps/nfs
 
 **Deployed Applications**
 
+![LDAP VM ArgoCD App in ACM](../img/acm-app-demo-autofs-ldap.png)
 ![LDAP VM ArgoCD App](../img/argo-app-demo-autofs-ldap.png)
 ![NFS VM ArgoCD App](../img/argo-app-demo-autofs-nfs.png)
 ![CLient VM ArgoCD App](../img/argo-app-demo-autofs-client.png)
