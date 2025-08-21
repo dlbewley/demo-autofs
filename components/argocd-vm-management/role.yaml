@@ -6,9 +6,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
   name: argocd-vm-management
 rules:
-- apiGroups:
-  - kubevirt.io
-  resources:
-  - virtualmachines
-  verbs:
-  - '*'
+  - apiGroups:
+    - kubevirt.io
+    - k8s.cni.cncf.io
+    resources:
+      - virtualmachines
+      - multi-networkpolicies
+    verbs:
+      - '*'
