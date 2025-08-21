@@ -22,3 +22,9 @@ oc delete namespace demo-nfs
 oc kustomize nfs/base | kfilt -n cloudinitdisk-nfs -k namespace | oc apply -f -
 oc apply -k argo-apps/nfs
 ```
+
+**Deployed Applications**
+
+![LDAP VM ArgoCD App](../img/argo-app-demo-autofs-ldap.png)
+![NFS VM ArgoCD App](../img/argo-app-demo-autofs-nfs.png)
+![CLient VM ArgoCD App](../img/argo-app-demo-autofs-client.png)
