@@ -64,7 +64,7 @@ patches:
         value: {
           "name": "nic-1924",
           "multus": {
-            "networkName": "default/vlan-1924"
+            "networkName": "localnet-1924"
           }
         }
 
