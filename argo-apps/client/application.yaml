@@ -10,7 +10,7 @@ spec:
     server: 'https://kubernetes.default.svc'
   sources:
     - repoURL: 'https://github.com/dlbewley/demo-autofs'
-      targetRevision: main
+      targetRevision: feature/cudn
       path: client/base
   project: default
   syncPolicy:
