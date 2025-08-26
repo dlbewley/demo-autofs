@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: demo-nfs
   labels:
-    localnet: 1924
+    localnet: "1924"
