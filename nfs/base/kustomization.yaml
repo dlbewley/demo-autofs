@@ -11,6 +11,7 @@ labels:
       app.kubernetes.io/instance: demo-autofs-nfs
 
 components:
+  - ../../components/argocd-net-management
   - ../../components/argocd-vm-management
   - ../../components/localnet-1924
 
