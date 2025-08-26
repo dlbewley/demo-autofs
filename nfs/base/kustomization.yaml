@@ -12,7 +12,9 @@ labels:
 
 components:
   - ../../components/argocd-vm-management
-  - ../../components/vms/nfs
+
+resources:
+  - virtualmachine.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

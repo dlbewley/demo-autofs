@@ -12,7 +12,6 @@ labels:
 
 components:
   - ../../components/argocd-vm-management
-  - ../../components/vms/client
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -30,6 +29,7 @@ secretGenerator:
 
 resources:
   - namespace.yaml
+  - virtualmachine.yaml
 
 patches:
   # i wish to manually handle updates to this secret for now
