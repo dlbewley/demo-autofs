@@ -12,6 +12,7 @@ labels:
 
 components:
   - ../../components/argocd-vm-management
+  - ../../components/localnet-1924
 
 resources:
   - virtualmachine.yaml

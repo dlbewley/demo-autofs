@@ -1,0 +1,14 @@
+---
+apiVersion: nmstate.io/v1
+kind: NodeNetworkConfigurationPolicy
+metadata:
+  name: physnet-mapping
+spec:
+  desiredState:
+    ovn:
+      bridge-mappings:
+        # this value will be used as physicalNetworkName in every (C)UDN using the same bridge
+        - localnet: physnet-br-vmdata
+          # override bride name in overlay if necessary
+          bridge: br-vmdata
+          state: present
