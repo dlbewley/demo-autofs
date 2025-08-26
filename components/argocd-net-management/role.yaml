@@ -12,5 +12,6 @@ rules:
     resources:
       - clusteruserdefinednetworks
       - nodenetworkconfigurationpolicies
+      - userdefinednetworks
     verbs:
       - '*'
