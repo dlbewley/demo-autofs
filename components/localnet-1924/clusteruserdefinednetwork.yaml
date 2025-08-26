@@ -9,7 +9,7 @@ spec:
   # what namespaces should have access to this network
   namespaceSelector:
     matchLabels:
-      labnet: 1924
+      labnet: "1924"
   network:
     topology: Localnet
     localnet:
