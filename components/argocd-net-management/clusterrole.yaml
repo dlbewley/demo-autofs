@@ -1,0 +1,14 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-net-management-cluster
+rules:
+  - apiGroups:
+    - k8s.ovn.org
+    - nmstate.io
+    resources:
+    - clusteruserdefinednetworks
+    - nodenetworkconfigurationpolicies
+    verbs:
+    - '*'

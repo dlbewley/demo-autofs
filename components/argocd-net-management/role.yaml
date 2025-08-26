@@ -8,10 +8,7 @@ metadata:
 rules:
   - apiGroups:
     - k8s.ovn.org
-    - nmstate.io
     resources:
-      - clusteruserdefinednetworks
-      - nodenetworkconfigurationpolicies
-      - userdefinednetworks
+      - userdefiednetworks
     verbs:
       - '*'
