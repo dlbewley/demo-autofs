@@ -3,9 +3,6 @@ kind: Application
 metadata:
   name: demo-autofs
   namespace: openshift-gitops
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   destination:
     server: 'https://kubernetes.default.svc'
@@ -18,3 +15,4 @@ spec:
     automated:
       prune: false
       allowEmpty: true
+      selfHeal: true
