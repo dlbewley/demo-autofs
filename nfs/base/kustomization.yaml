@@ -14,6 +14,7 @@ components:
   - ../../components/argocd-vm-management
 
 resources:
+  - namespace.yaml
   - virtualmachine.yaml
 
 generatorOptions:
@@ -28,9 +29,6 @@ secretGenerator:
   - name: cloudinitdisk-nfs
     files:
       - scripts/userData
-
-resources:
-  - namespace.yaml
 
 patches:
   # i wish to manually handle updates to this secret for now
