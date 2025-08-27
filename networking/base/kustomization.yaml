@@ -12,5 +12,7 @@ labels:
 
 components:
   - ../../components/argocd-net-management
+  # add node selector in overlay
   - ../../components/physnet-mapping
-  - ../../components/localnet-1924
+  # add appropriate localnets in overlay
+  # - ../../components/localnet-1924
