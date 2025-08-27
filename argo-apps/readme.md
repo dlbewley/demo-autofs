@@ -6,6 +6,18 @@ Use kustomize to create the namespace and the userData secret as it exists in my
 
 THen create the ArgoCD application pointing at the git repo. The userData secret is annotated to prevent ArgoCD from modifying it with the copy stored in git which allows the Virtual Machine to use the correct userData containing RHEL subscription information.
 
+## Deploy as an App of Apps
+
+```bash
+# hacky workaround for
+oc kustomize client/base | kfilt -n cloudinitdisk-client -k namespace | oc apply -f -
+oc kustomize ldap/base | kfilt -n cloudinitdisk-ldap -k namespace | oc apply -f -
+oc kustomize nfs/base | kfilt -n cloudinitdisk-nfs -k namespace | oc apply -f -
+
+oc apply -k argo-apps/demo-autofs
+```
+
+## Deploy Individually
 ```bash
 oc apply -k argo-apps/networking
 
