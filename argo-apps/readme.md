@@ -1,11 +1,5 @@
 # Deploy VMs using ArgoCD
 
-This is a manual workaround for my lack of secret management in my lab.
-
-Use kustomize to create the namespace and the userData secret as it exists in my working dirctory.
-
-THen create the ArgoCD application pointing at the git repo. The userData secret is annotated to prevent ArgoCD from modifying it with the copy stored in git which allows the Virtual Machine to use the correct userData containing RHEL subscription information.
-
 # Argo Apps
 
 The following ArgoCD applications are defined:
@@ -15,6 +9,16 @@ The following ArgoCD applications are defined:
   * [demo-autofs-ldap](ldap/application.yaml) - Deploys LDAP server VM
   * [demo-autofs-networking](networking/application.yaml) - Sets up required networking configuration
   * [demo-autofs-nfs](nfs/application.yaml) - Deploys NFS server VM
+
+## Cloud-init User Data Hack
+
+> ![NOTE]
+> This hacky manual workaround for cloud-init is required due to the currentl lack of secrets management in my lab environment.
+
+Use kustomize to create the namespace and the userData secret as it exists in my working dirctory.
+
+Then create the ArgoCD application pointing at the git repo. The userData secret is annotated to prevent ArgoCD from modifying it with the copy stored in git which allows the Virtual Machine to use the correct userData containing RHEL subscription information.
+
 
 ## Deploying Alls As An App of Apps
 
