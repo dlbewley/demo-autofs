@@ -7,6 +7,7 @@ resources:
 
 components:
   - ../../../components/localnet-1924
+  - ../../../components/localnet-1924-dhcp
 
 patches:
   - target:
