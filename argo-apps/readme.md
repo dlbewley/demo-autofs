@@ -58,3 +58,115 @@ oc apply -k argo-apps/nfs
 ![LDAP VM ArgoCD App](../img/argo-app-demo-autofs-ldap.png)
 ![NFS VM ArgoCD App](../img/argo-app-demo-autofs-nfs.png)
 ![CLient VM ArgoCD App](../img/argo-app-demo-autofs-client.png)
+
+
+# Secret Management WIP
+
+## Install ESO
+
+Install a version of ESO which supports the 1password-sdk provider. The 1password-connect provider is deprecated provider and the operators in the OpenShift catalog as of 2025-08 are based on ESO 0.10.0.
+
+* Install latest upstream ESO using Helm
+
+```bash
+$ helm repo add external-secrets https://charts.external-secrets.io
+
+$ oc new-project external-secrets
+
+$ helm install external-secrets \
+   external-secrets/external-secrets \
+   -n external-secrets
+```
+
+## Setup 1Password
+
+* create a 1Password vault
+
+```bash
+$ op vault create eso --icon gears
+```
+
+* Create a token to login to 1Password. 90 days was max allowed :(
+
+```bash
+$ TOKEN=$(
+    op service-account create external-secrets-operator \
+      --expires-in 90d \
+      --vault eso:read_items,write_items \
+    )
+```
+
+To test access: `export OP_SERVICE_ACCOUNT_TOKEN=$TOKEN`
+
+* Place token in a secret allowing ESO to access 1Password
+
+ ```bash
+$ oc create secret generic onepassword-connect-token \
+  --from-literal=token="$TOKEN" \
+  -n external-secrets
+```
+
+## Setup ESO
+
+```yaml
+---
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: 1password-sdk
+spec:
+  provider:
+    onepasswordSDK:
+      vault: eso
+      auth:
+        serviceAccountSecretRef:
+          name: onepassword-connect-token
+          key: token
+          namespace: external-secrets
+```
+
+## Store Data in 1Password
+
+
+https://developer.1password.com/docs/cli/item-create/
+
+* Store Client VM userData in 1Password
+
+```bash
+vault=eso
+vm=client
+op item create \
+    --vault "$vault" \
+    --category login \
+    --title "demo autofs $vm" \
+    --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
+    --tags demo=autofs \
+    "[file]=${vm}/base/scripts/userData"
+```
+
+### Read Data in 1Password
+
+```yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cloudinitdisk-client
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password-sdk
+  target:
+    name: cloudinitdisk-client # this will be the name of the secret
+    creationPolicy: Owner
+  data:
+
+  - secretKey: "userData" # this will be a field in the secret
+    remoteRef:
+      key: "demo autofs client/userData"
+```
+
+This will automatically create a Secret named `cloudinitdisk-client`.
+
+# Todo
+
+- Refactor to use ESO info above instead of the current hack.
