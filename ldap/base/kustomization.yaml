@@ -28,27 +28,17 @@ configMapGenerator:
       - scripts/users.ldif
 
 secretGenerator:
-  - name: cloudinitdisk-ldap
+  - name: cloudinitdisk-ldap-sample
     files:
       - scripts/userData
 
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - multinetworkpolicy.yaml
   - virtualmachine.yaml
 
 patches:
-  # i wish to manually handle updates to this secret for now
-  - target:
-      kind: Secret
-      name: cloudinitdisk-ldap
-    patch: |-
-      - op: add
-        path: /metadata/annotations
-        value:
-          argocd.argoproj.io/hook: Skip
-          argocd.argoproj.io/sync-options: Prune=false
-
   - target:
       group: kubevirt.io
       kind: VirtualMachine

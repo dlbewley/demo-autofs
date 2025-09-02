@@ -15,6 +15,7 @@ components:
 
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - virtualmachine.yaml
 
 generatorOptions:
@@ -26,21 +27,21 @@ configMapGenerator:
       - scripts/home.exports
 
 secretGenerator:
-  - name: cloudinitdisk-nfs
+  - name: cloudinitdisk-nfs-sample
     files:
       - scripts/userData
 
 patches:
   # i wish to manually handle updates to this secret for now
-  - target:
-      kind: Secret
-      name: cloudinitdisk-nfs
-    patch: |-
-      - op: add
-        path: /metadata/annotations
-        value:
-          argocd.argoproj.io/hook: Skip
-          argocd.argoproj.io/sync-options: Prune=false
+  # - target:
+  #     kind: Secret
+  #     name: cloudinitdisk-nfs
+  #   patch: |-
+  #     - op: add
+  #       path: /metadata/annotations
+  #       value:
+  #         argocd.argoproj.io/hook: Skip
+  #         argocd.argoproj.io/sync-options: Prune=false
 
   - target:
       group: kubevirt.io

@@ -125,26 +125,30 @@ spec:
           namespace: external-secrets
 ```
 
-## Store Data in 1Password
+## Write Data 1Password
 
+* Edit `{client,ldap,nfs}/base/scripts/userData` and insert configuration that should not be stored in git. Eg. Red Hat subscription activation keys.
 
-https://developer.1password.com/docs/cli/item-create/
-
-* Store Client VM userData in 1Password
+* Store the VM userData for each VM in 1Password <https://developer.1password.com/docs/cli/item-create/>
 
 ```bash
 vault=eso
-vm=client
-op item create \
+for vm in client ldap nfs; do
+  op item create \
     --vault "$vault" \
     --category login \
     --title "demo autofs $vm" \
     --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
     --tags demo=autofs \
     "[file]=${vm}/base/scripts/userData"
+done
 ```
 
-### Read Data in 1Password
+![../img/1password-vault.png](../img/1password-vault.png)
+
+### Read Data from 1Password
+
+* This will be done through the External Secret Operator.
 
 ```yaml
 apiVersion: external-secrets.io/v1

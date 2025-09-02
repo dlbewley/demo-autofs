@@ -23,12 +23,13 @@ configMapGenerator:
       - scripts/homedir.conf
 
 secretGenerator:
-  - name: cloudinitdisk-client
+  - name: cloudinitdisk-client-sample
     files:
       - scripts/userData
 
 resources:
   - namespace.yaml
+  - externalsecret.yaml
   - virtualmachine.yaml
 
 patches:
