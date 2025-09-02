@@ -9,7 +9,7 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    # argocd.argoproj.io/sync-wave: "1"
     vm.kubevirt.io/validations: |
       [
         {
