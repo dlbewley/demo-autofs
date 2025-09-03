@@ -8,7 +8,6 @@ This directory contains the following reusable Kustomize components:
 * [localnet-1924](localnet-1924/) - VLAN 1924 network configuration with static IP allocation provided by OpenShift OVN
 * [localnet-1924-dhcp](localnet-1924-dhcp/) - VLAN 1924 network configuration with DHCP provided by the datacenter
 * [physnet-mapping](physnet-mapping/) - Physical network bridge mapping configuration for OVN-Kubernetes
-* [vms](vms/) - Virtual machine management and configuration components
 
 ## Component Details
 
@@ -29,6 +28,3 @@ The localnet-1924-dhcp component also defines a ClusterUserDefinedNetwork for VL
 
 ### physnet-mapping
 The physnet-mapping component contains NodeNetworkConfigurationPolicy resources that define the physical network bridge mappings for OVN-Kubernetes. It configures the `br-vmdata` bridge mapping to the `physnet-br-vmdata` physical network, enabling OVN to properly route traffic between virtual and physical networks.
-
-### vms
-The vms component contains virtual machine management and configuration resources. This includes templates, configurations, and other resources needed for deploying and managing virtual machines in the environment.
