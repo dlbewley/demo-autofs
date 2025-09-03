@@ -101,7 +101,7 @@ $ helm install external-secrets \
 
 ## Configuring 1Password
 
-The External Secrets Operator supports many providers including Hashicorp Vault for example. This example uses 1Password for it's ease of setup.
+The External Secrets Operator supports many providers including Hashicorp Vault for example. I am using 1Password for it's ease of setup.
 
 * Create a dedicated vault in 1Password for use by ESO
 
@@ -217,7 +217,7 @@ oc delete -k argo-apps/demo-autofs
 oc delete application.argoproj.io/demo-autofs -n openshift-gitops
 ```
 
-The CUDN controller will prevent the deletion of namespaces assocated with UDNs or [CUDNs](../components/localnet-1924/clusterdefinednetwork.yaml) through namespace selectors. In this case we are using `localnet=1924`.
+The Cluster User Defined Network controller will prevent the deletion of namespaces assocated with [CUDNs](../components/localnet-1924/clusterdefinednetwork.yaml) through namespace selectors. In this case the label we are using is `localnet=1924`.
 
 > [!IMPORTANT]
 > Remove the label from the namespace to allow the deletion to proceed.

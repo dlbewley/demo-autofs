@@ -8,7 +8,7 @@ spec:
     server: 'https://kubernetes.default.svc'
   sources:
     - repoURL: 'https://github.com/dlbewley/demo-autofs'
-      targetRevision: feature/cudn
+      targetRevision: main
       path: argo-apps/demo-autofs
   project: default
   syncPolicy:
