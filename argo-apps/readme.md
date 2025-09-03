@@ -7,10 +7,10 @@ Overview of deploying VMs as applications using ArgoCD. The same can be accompli
 The following ArgoCD applications are defined:
 
 * [demo-autofs App of Apps](demo-autofs/kustomization.yaml) - Deploys all of the following:
-  * [demo-autofs-networking](networking/application.yaml) - Sets up required networking configuration (sync wave -1)
-  * [demo-autofs-ldap](ldap/application.yaml) - Deploys LDAP server VM (sync wave 0)
-  * [demo-autofs-nfs](nfs/application.yaml) - Deploys NFS server VM (sync wave 3)
-  * [demo-autofs-client](client/application.yaml) - Deploys client VM (sync wave 4)
+  * [demo-autofs-networking](networking/application.yaml) - Sets up required networking configuration _(sync wave -1)_
+  * [demo-autofs-ldap](ldap/application.yaml) - Deploys LDAP server VM _(sync wave 0)_
+  * [demo-autofs-nfs](nfs/application.yaml) - Deploys NFS server VM _(sync wave 3)_
+  * [demo-autofs-client](client/application.yaml) - Deploys client VM _(sync wave 4)_
 
 Each [VirtualMachine](../client/base/virtualmachine.yaml) resource within each app has a sync wave annotation of 1 with the intention of it following the ExternalSecret reconciliation.
 
@@ -22,7 +22,11 @@ This will deploy an app of apps enabling the deployment of the entire demo throu
 oc apply -k argo-apps/demo-autofs
 ```
 
+![ArgoCD App of Apps](../img/argo-app-of-apps-demo-autofs.png)
+
 ## Deploying Each App Individually
+
+This will deploy each app individually.
 
 ```bash
 oc apply -k argo-apps/networking
@@ -34,10 +38,38 @@ oc apply -k argo-apps/client
 ## Deployed Applications
 
 ![Networking ArgoCD App](../img/argo-app-demo-autofs-network.png)
-![LDAP VM ArgoCD App in ACM](../img/acm-app-demo-autofs-ldap.png)
 ![LDAP VM ArgoCD App](../img/argo-app-demo-autofs-ldap.png)
 ![NFS VM ArgoCD App](../img/argo-app-demo-autofs-nfs.png)
 ![CLient VM ArgoCD App](../img/argo-app-demo-autofs-client.png)
+
+Here is a view of the LDAP application from RHACM.
+
+![LDAP VM ArgoCD App in ACM](../img/acm-app-demo-autofs-ldap.png)
+
+> [!IMPORTANT]
+> The default ArgoCD resources may be too low. I've seen the argo controller go into crashloop backoff following an OOMKill event.
+> https://docs.redhat.com/en/documentation/red_hat_openshift_gitops/1.17/html/managing_resource_use/configuring-resource-quota
+
+* Use this patch to increase the memory available to the ArgoCD Controller.
+
+```yaml
+$ oc get argocd/openshift-gitops -n openshift-gitops -o yaml | yq .spec.controller
+processors: {}
+resources:
+  limits:
+    cpu: "2"
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 1Gi
+sharding: {}
+
+$ oc patch argocd/openshift-gitops -n openshift-gitops --type='json' \
+  -p='[
+    {"op": "replace", "path": "/spec/controller/resources/requests/memory", "value":"2Gi"},
+    {"op": "replace", "path": "/spec/controller/resources/limits/memory", "value":"4Gi"},
+    ]'
+```
 
 # Securing Cloud-init User Data
 
@@ -51,7 +83,7 @@ The application deployment will generate an unused secret with a `-sample` suffi
 
 Details on configuring the External Secret Operator are below.
 
-## Installing External Secret Operator
+## Installing the External Secrets Operator
 
 Install a version of ESO which supports the 1password-sdk provider. The 1password-connect provider is deprecated provider and the operators in the OpenShift catalog as of 2025-08 are based on ESO 0.10.0.
 
@@ -67,7 +99,7 @@ $ helm install external-secrets \
    -n external-secrets
 ```
 
-## Setup 1Password
+## Configuring 1Password
 
 The External Secrets Operator supports many providers including Hashicorp Vault for example. This example uses 1Password for it's ease of setup.
 
@@ -106,7 +138,7 @@ $ oc create secret generic onepassword-connect-token \
 >  euaujb4izjftqineetzaer3x7i    demo autofs client               eso              5 days ago
 >  ```
 
-## Setup ESO
+## Configuring the External Secrets Operator
 
 * Create a `ClusterSecretStore`
 
@@ -146,6 +178,8 @@ for vm in client ldap nfs; do
 done
 ```
 
+Here is a view of the 1Password vault.
+
 ![../img/1password-vault.png](../img/1password-vault.png)
 
 ### Read Data from 1Password
@@ -175,7 +209,15 @@ This ExternalSecret will cause a Secret named `cloudinitdisk-client` to be gener
 
 # Cleanup
 
-The CUDN controller will prevent the deletion of namespaces assocated with UDNs or [CUDNs](../components/localnet-1924/clusterdefinednetwork.yaml) through namespace selectors.
+* Remove everything
+
+```bash
+oc delete -k argo-apps/demo-autofs
+# or
+oc delete application.argoproj.io/demo-autofs -n openshift-gitops
+```
+
+The CUDN controller will prevent the deletion of namespaces assocated with UDNs or [CUDNs](../components/localnet-1924/clusterdefinednetwork.yaml) through namespace selectors. In this case we are using `localnet=1924`.
 
 > [!IMPORTANT]
 > Remove the label from the namespace to allow the deletion to proceed.
