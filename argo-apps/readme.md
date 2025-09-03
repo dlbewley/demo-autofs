@@ -1,54 +1,31 @@
-# Deploy VMs using ArgoCD
+# Deploying VMs using ArgoCD
+
+Overview of deploying VMs as applications using ArgoCD. The same can be accomplished just using kustomize if desired.
 
 # Argo Apps
 
 The following ArgoCD applications are defined:
 
 * [demo-autofs App of Apps](demo-autofs/kustomization.yaml) - Deploys all of the following:
-  * [demo-autofs-client](client/application.yaml) - Deploys client VM
-  * [demo-autofs-ldap](ldap/application.yaml) - Deploys LDAP server VM
   * [demo-autofs-networking](networking/application.yaml) - Sets up required networking configuration
+  * [demo-autofs-ldap](ldap/application.yaml) - Deploys LDAP server VM
   * [demo-autofs-nfs](nfs/application.yaml) - Deploys NFS server VM
-
-## Cloud-init User Data Hack
-
-> ![NOTE]
-> This hacky manual workaround for cloud-init is required due to the currentl lack of secrets management in my lab environment.
-
-Use kustomize to create the namespace and the userData secret as it exists in my working dirctory.
-
-Then create the ArgoCD application pointing at the git repo. The userData secret is annotated to prevent ArgoCD from modifying it with the copy stored in git which allows the Virtual Machine to use the correct userData containing RHEL subscription information.
-
+  * [demo-autofs-client](client/application.yaml) - Deploys client VM
 
 ## Deploying Alls As An App of Apps
 
-```bash
-# hacky workaround for cloud init secret management
-oc kustomize client/base | kfilt -n cloudinitdisk-client -k namespace | oc apply -f -
-oc kustomize ldap/base | kfilt -n cloudinitdisk-ldap -k namespace | oc apply -f -
-oc kustomize nfs/base | kfilt -n cloudinitdisk-nfs -k namespace | oc apply -f -
+This will deploy an app of apps enabling the deployment of the entire demo through a single entry point.
 
+```bash
 oc apply -k argo-apps/demo-autofs
 ```
 
 ## Deploying Each App Individually
 ```bash
 oc apply -k argo-apps/networking
-
-oc delete -k argo-apps/client
-oc delete namespace demo-client
-oc kustomize client/base | kfilt -n cloudinitdisk-client -k namespace | oc apply -f -
-oc apply -k argo-apps/client
-
-oc delete -k argo-apps/ldap
-oc delete namespace demo-ldap
-oc kustomize ldap/base | kfilt -n cloudinitdisk-ldap -k namespace | oc apply -f -
 oc apply -k argo-apps/ldap
-
-oc delete -k argo-apps/nfs
-oc delete namespace demo-nfs
-oc kustomize nfs/base | kfilt -n cloudinitdisk-nfs -k namespace | oc apply -f -
 oc apply -k argo-apps/nfs
+oc apply -k argo-apps/client
 ```
 
 ## Deployed Applications
@@ -59,10 +36,13 @@ oc apply -k argo-apps/nfs
 ![NFS VM ArgoCD App](../img/argo-app-demo-autofs-nfs.png)
 ![CLient VM ArgoCD App](../img/argo-app-demo-autofs-client.png)
 
+# Securing Cloud-init User Data
 
-# Secret Management WIP
+The [userData](../client/base/scripts/userData) secret contains credentials which should not be stored in GitHub. The application will generate an unused secret with a `-sample` suffix using the value found in git. The actually secret used by cloud-init will be provided by an [externalsecret](../client/base/externalsecret.yaml).
 
-## Install ESO
+Details on configuring the External Secret Operator are below.
+
+## Installing External Secret Operator
 
 Install a version of ESO which supports the 1password-sdk provider. The 1password-connect provider is deprecated provider and the operators in the OpenShift catalog as of 2025-08 are based on ESO 0.10.0.
 
@@ -80,13 +60,15 @@ $ helm install external-secrets \
 
 ## Setup 1Password
 
-* create a 1Password vault
+The External Secrets Operator supports many providers including Hashicorp Vault for example. This example uses 1Password for it's ease of setup.
+
+* Create a dedicated vault in 1Password for use by ESO
 
 ```bash
 $ op vault create eso --icon gears
 ```
 
-* Create a token to login to 1Password. 90 days was max allowed :(
+* Create a token to authenticate ESO to 1Password. (90 days was max allowed)
 
 ```bash
 $ TOKEN=$(
@@ -96,8 +78,6 @@ $ TOKEN=$(
     )
 ```
 
-To test access: `export OP_SERVICE_ACCOUNT_TOKEN=$TOKEN`
-
 * Place token in a secret allowing ESO to access 1Password
 
  ```bash
@@ -106,7 +86,20 @@ $ oc create secret generic onepassword-connect-token \
   -n external-secrets
 ```
 
+> ![NOTE]
+> To test access: `export OP_SERVICE_ACCOUNT_TOKEN=$TOKEN; `
+> ```bash
+>  $ export OP_SERVICE_ACCOUNT_TOKEN=$(oc extract secret/onepassword-connect-token -n external-secrets --keys=token --to=-)
+>  $ op item list --vault eso
+>  ID                            TITLE                            VAULT            EDITED
+>  yzsurcc4oxfjp7qdidonudn3ne    demo autofs ldap                 eso              22 hours ago
+>  wretasduq3rkip7wn37njozghi    demo autofs nfs                  eso              22 hours ago
+>  euaujb4izjftqineetzaer3x7i    demo autofs client               eso              5 days ago
+>  ```
+
 ## Setup ESO
+
+* Create a `ClusterSecretStore`
 
 ```yaml
 ---
@@ -127,9 +120,9 @@ spec:
 
 ## Write Data 1Password
 
-* Edit `{client,ldap,nfs}/base/scripts/userData` and insert configuration that should not be stored in git. Eg. Red Hat subscription activation keys.
+* Copy and edit the `{client,ldap,nfs}/base/scripts/userData` scripts. Insert the configuration that should not be stored in git. Eg. Red Hat subscription activation keys.
 
-* Store the VM userData for each VM in 1Password <https://developer.1password.com/docs/cli/item-create/>
+* Store the the updated userData for each VM in 1Password <https://developer.1password.com/docs/cli/item-create/>
 
 ```bash
 vault=eso
@@ -148,7 +141,7 @@ done
 
 ### Read Data from 1Password
 
-* This will be done through the External Secret Operator.
+* Create an `{client,ldap,nfs}/base/externalsecret.yaml` for each VM.
 
 ```yaml
 apiVersion: external-secrets.io/v1
@@ -169,8 +162,4 @@ spec:
       key: "demo autofs client/userData"
 ```
 
-This will automatically create a Secret named `cloudinitdisk-client`.
-
-# Todo
-
-- Refactor to use ESO info above instead of the current hack.
+This ExternalSecret will cause a Secret named `cloudinitdisk-client` to be generated by the ESO.
