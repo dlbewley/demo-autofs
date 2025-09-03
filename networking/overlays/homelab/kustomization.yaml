@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/
+
+components:
+  - ../../../components/localnet-1924
+  - ../../../components/localnet-1924-dhcp
+
+patches:
+  - target:
+      kind: NodeNetworkConfigurationPolicy
+      name: ovs-bridge-mapping-physnet-br-vmdata
+    patch: |-
+      - op: replace
+        path: /spec/nodeSelector
+        value: {
+              "machine.openshift.io/cluster-api-machineset": "hub-v57jl-cnv"
+        }

@@ -1,7 +1,7 @@
 # oc process \
 #  template/rhel9-server-small \
 #  -n openshift \
-#  -p NAME=client \
+#  -p NAME=ldap \
 #  -o yaml \
 #  | yq e '.items[0]' > virtualmachine.yaml
 ---
@@ -9,6 +9,7 @@ apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   annotations:
+    # argocd.argoproj.io/sync-wave: "1"
     vm.kubevirt.io/validations: |
       [
         {
@@ -20,18 +21,18 @@ metadata:
         }
       ]
   labels:
-    app: client
+    app: ldap
     kubevirt.io/dynamic-credentials-support: "true"
     vm.kubevirt.io/template: rhel9-server-small
     vm.kubevirt.io/template.revision: "1"
     vm.kubevirt.io/template.version: v0.32.2
-  name: client
+  name: ldap
 spec:
   dataVolumeTemplates:
     - apiVersion: cdi.kubevirt.io/v1beta1
       kind: DataVolume
       metadata:
-        name: client
+        name: ldap
       spec:
         sourceRef:
           kind: DataSource
@@ -49,7 +50,7 @@ spec:
         vm.kubevirt.io/os: rhel9
         vm.kubevirt.io/workload: server
       labels:
-        kubevirt.io/domain: client
+        kubevirt.io/domain: ldap
         kubevirt.io/size: small
     spec:
       architecture: amd64
@@ -85,12 +86,12 @@ spec:
       terminationGracePeriodSeconds: 180
       volumes:
         - dataVolume:
-            name: client
+            name: ldap
           name: rootdisk
         - cloudInitNoCloud:
             userData: |-
               #cloud-config
               user: cloud-user
-              password: jcyf-vngm-h2pk
+              password: 18v8-une8-35c2
               chpasswd: { expire: False }
           name: cloudinitdisk

@@ -1,0 +1,24 @@
+---
+# https://ovn-kubernetes.io/api-reference/userdefinednetwork-api-spec/#clusteruserdefinednetworkspec
+# can only be created by cluster-admin
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: localnet-1924-dhcp
+spec:
+  # what namespaces should have access to this network
+  namespaceSelector:
+    matchLabels:
+      localnet: "1924"
+  network:
+    topology: Localnet
+    localnet:
+      role: Secondary
+      # bridge mapping
+      physicalNetworkName: physnet-br-vmdata
+      vlan:
+        mode: Access
+        access:
+          id: 1924
+      ipam:
+        mode: Disabled

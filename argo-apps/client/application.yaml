@@ -4,7 +4,7 @@ metadata:
   name: demo-autofs-client
   namespace: openshift-gitops
   annotations:
-    argocd.argoproj.io/sync-wave: "12"
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   destination:
     server: 'https://kubernetes.default.svc'
@@ -15,5 +15,12 @@ spec:
   project: default
   syncPolicy:
     automated:
-      prune: false
       allowEmpty: true
+      prune: false
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

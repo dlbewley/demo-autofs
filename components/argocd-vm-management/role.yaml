@@ -7,9 +7,11 @@ metadata:
   name: argocd-vm-management
 rules:
   - apiGroups:
+    - external-secrets.io
     - kubevirt.io
     - k8s.cni.cncf.io
     resources:
+      - externalsecrets
       - virtualmachines
       - multi-networkpolicies
     verbs:

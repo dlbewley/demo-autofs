@@ -1,23 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: demo-autofs-nfs
+  name: demo-autofs-networking
   namespace: openshift-gitops
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: Prune=false,Validate=false
 spec:
   destination:
     server: 'https://kubernetes.default.svc'
   sources:
     - repoURL: 'https://github.com/dlbewley/demo-autofs'
       targetRevision: main
-      path: nfs/base
+      path: networking/overlays/homelab
   project: default
   syncPolicy:
     automated:
-      allowEmpty: true
       prune: false
       selfHeal: true
+      allowEmpty: true
     retry:
       limit: 5
       backoff:
