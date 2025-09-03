@@ -1,9 +1,26 @@
 # OpenLDAP Server in OpenShift Virtualization Linux VM
 
-* Deploy and start the VM
+* Add any required changes to [userData script](base/scripts/userData), but do not commit the changes to git.
+
+* Upload this to 1Password or another ClusterSecretStore.
+
 ```bash
-oc apply -k base
-virctl start -n demo-ldap ldap
+vault=eso
+vm=ldap
+op item create \
+    --vault "$vault" \
+    --category login \
+    --title "demo autofs $vm" \
+    --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
+    --tags demo=autofs \
+    "[file]=${vm}/base/scripts/userData"
+```
+* Deploy the VM
+
+```bash
+oc apply -k ldap/base
+# or
+oc apply -k argo-apps/ldap
 ```
 
 ## Firewalling with MultiNetworkPolicy
