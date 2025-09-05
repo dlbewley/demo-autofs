@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - ../../base
+  - multinetworkpolicy.yaml
 
 components:
   - ../../../components/localnet-1924

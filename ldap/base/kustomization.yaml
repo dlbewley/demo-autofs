@@ -35,7 +35,6 @@ secretGenerator:
 resources:
   - namespace.yaml
   - externalsecret.yaml
-  - multinetworkpolicy.yaml
   - virtualmachine.yaml
 
 patches:
