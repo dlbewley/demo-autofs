@@ -1,8 +1,8 @@
 # Demo AutoFS
 
-## Deploy Autofs VM Infrastructure
+## Deploying Example Autofs Infrastructure to VMs
 
-These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps.
+These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps. All configuration is entirely automated using cloud-init and may be provisioned using [GitOps](argo-apps/).
 
 This demo sets up 3 VMs on OpenShift Virtualization.
 
@@ -11,15 +11,15 @@ This demo sets up 3 VMs on OpenShift Virtualization.
 * [NFS Client](client/)
 
 > [!IMPORTANT]
-> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying. See [argo-apps/readme.md](argo-apps dir) for more information.
+> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying.  See [argo-apps dir](argo-apps/readme.md) for more information including the use of External Secrets Operator.
 
 ### Networking Options
 
-The VMs have Kustomize Overlays to allow for the use of different network connectivity options.
+Each VM has Kustomize Overlays to allow for the use of different network connectivity options.
 
-1️⃣ The `localnet` overlays attaches the VM to a physical datacenter or "provider" VLAN by way of the [localnet-1924-dhcp](components/localnet-1924-dhcp/) component.
+* 1️⃣ The `localnet` overlay attaches the VM to a physical datacenter or "provider" VLAN by way of the [localnet-1924-dhcp](components/localnet-1924-dhcp/) component.
 
-2️⃣ A second overlay `l2` sets up a layer2 overlay network as the primary UDN for the namespace by way of the [l2-infra](components/l2-infra/) component.
+* 2️⃣ The `l2` overlay sets up a layer2 overlay network as the primary UDN for the namespace by way of the [l2-infra](components/l2-infra/) component.
 
 ### LDAP Server VM
 
@@ -43,17 +43,16 @@ Users are created in `/exports/home` via [the cloud-init](nfs/base/scripts/userD
 
 User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from ldap will automount at `/home/<user>`.
 
-====
 
-# Running Autofs in a Pod
+# Other Use Cases
+
+## Running Autofs in a Pod
 
 Automounting filesystems on OpenShift nodes.
 
 See [automount/](automount/). This was not entirely successful, so attention moved to running autofs directly in the Node OS.
 
-====
-
-# Run Autofs in the Node OS
+## Running Autofs in the Node OS
 
 See [layering/](layering/)
 
