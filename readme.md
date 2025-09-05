@@ -1,19 +1,48 @@
 # Demo AutoFS
 
-## VM Infrastructure
+> [!NOTE]
+> **This demo illustrates several concepts including:**
+> * Kustomization concepts including secret generation and overlays
+> * Consuming of secrets and configmaps as volumes in VMs
+> * Using cloud-init userData to fully configure VM operating systems
+> * Using ArogCD for GitOps management of VMs and networking
+> * Using _localnet_ and _layer2_  User Defined Network topologies
+> * Attaching OpenShift Virtual Machines to datacenter VLANs
+> * Using Network Policies to apply VM level firewalling
 
-These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps.
+## Deploying Example Autofs Infrastructure to VMs
+
+These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps. All configuration is entirely automated using cloud-init and may be provisioned using [GitOps](argo-apps/).
 
 This demo sets up 3 VMs on OpenShift Virtualization.
 
-* LDAP Server
-* NFS Server
-* NFS Client
+* [LDAP Server](ldap/)
+* [NFS Server](nfs/)
+* [NFS Client](client/)
 
 > [!IMPORTANT]
-> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying.
+> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying.  See [argo-apps dir](argo-apps/readme.md) for more information including the use of External Secrets Operator.
 
-All of these VMs are attached only to the same VLAN as the nodes via a localnet NetworkAttachmentDefinition, and not to the primary pod (cluster) network.
+### Network Configuration
+
+The [networking configuraiton](networking/) defines some basic setup in its base via components to [enable network management](components/argocd-net-management) by ArgoCD and setup a bridge mapping for use with localnets.
+
+> [!WARNING]
+> Currently it is assumed that a bridge named `br-vmdata` exists for carrying VM traffic.
+> TODO: Make this support br-ex by default and br-vmdata by overlay.
+
+Deployment uses the [homelab overlay](networking/overlays/homelab/kustomization.yaml) which includes settings specific to the deployed environment. Eg. node selectors and [selection of VLAN id](components/localnet-1924-dhcp).
+
+> [!IMPORTANT]
+> Create a networking overlay for your lab and update the [networking application](ago-apps/networking/application.yaml) to use it before continuing.
+
+#### Networking Options
+
+Each VM has Kustomize Overlays to allow for the use of different network connectivity options.
+
+* 1️⃣ The `localnet` overlay attaches the VM to a physical datacenter or "provider" VLAN by way of the [localnet-1924-dhcp](components/localnet-1924-dhcp/) component.
+
+* 2️⃣ The `l2` overlay sets up a layer2 overlay network as the primary UDN for the namespace by way of the [l2-infra](components/l2-infra/) component.
 
 ### LDAP Server VM
 
@@ -37,15 +66,21 @@ Users are created in `/exports/home` via [the cloud-init](nfs/base/scripts/userD
 
 User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from ldap will automount at `/home/<user>`.
 
-# Run Autofs in a Pod
+
+# Other Use Cases
+
+> [!NOTE]
+> The above VM infrastructure may be used to facilitate testing of the following use cases.
+
+## Running Autofs in a Pod
 
 Automounting filesystems on OpenShift nodes.
 
 See [automount/](automount/). This was not entirely successful, so attention moved to running autofs directly in the Node OS.
 
-# Run Autofs in the Node OS
+## Running Autofs in the Node OS
 
-See [layering/](layering/)
+See [layering/](layering/) and [my blog post](https://guifreelife.com/blog/2025/06/20/CoreOS-Image-Layering-Autofs/).
 
 ## Access NFS mounted host paths in pod
 

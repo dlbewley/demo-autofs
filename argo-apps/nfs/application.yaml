@@ -11,7 +11,7 @@ spec:
   sources:
     - repoURL: 'https://github.com/dlbewley/demo-autofs'
       targetRevision: main
-      path: nfs/base
+      path: nfs/overlays/localnet
   project: default
   syncPolicy:
     automated:
