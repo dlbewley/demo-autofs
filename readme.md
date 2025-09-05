@@ -1,5 +1,15 @@
 # Demo AutoFS
 
+> [!NOTE]
+> **This demo illustrates several concepts including:**
+> * Kustomization concepts including secret generation and overlays
+> * Consuming of secrets and configmaps as volumes in VMs
+> * Using cloud-init userData to fully configure VM operating systems
+> * Using ArogCD for GitOps management of VMs and networking
+> * Using _localnet_ and _layer2_  User Defined Network topologies
+> * Attaching OpenShift Virtual Machines and datacenter VLANs
+> * Using Network Policies to apply VM level firewalling
+
 ## Deploying Example Autofs Infrastructure to VMs
 
 These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps. All configuration is entirely automated using cloud-init and may be provisioned using [GitOps](argo-apps/).
@@ -54,7 +64,7 @@ See [automount/](automount/). This was not entirely successful, so attention mov
 
 ## Running Autofs in the Node OS
 
-See [layering/](layering/)
+See [layering/](layering/) and [my blog post](https://guifreelife.com/blog/2025/06/20/CoreOS-Image-Layering-Autofs/).
 
 ## Access NFS mounted host paths in pod
 
