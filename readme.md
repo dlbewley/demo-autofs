@@ -1,19 +1,25 @@
 # Demo AutoFS
 
-## VM Infrastructure
+## Deploy Autofs VM Infrastructure
 
 These 3 VM deployments provide lab infrastructure for testing autofs with LDAP automount maps.
 
 This demo sets up 3 VMs on OpenShift Virtualization.
 
-* LDAP Server
-* NFS Server
-* NFS Client
+* [LDAP Server](ldap/)
+* [NFS Server](nfs/)
+* [NFS Client](client/)
 
 > [!IMPORTANT]
-> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying.
+> Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying. See [argo-apps/readme.md](argo-apps dir) for more information.
 
-All of these VMs are attached only to the same VLAN as the nodes via a localnet NetworkAttachmentDefinition, and not to the primary pod (cluster) network.
+### Networking Options
+
+The VMs have Kustomize Overlays to allow for the use of different network connectivity options.
+
+1️⃣ The `localnet` overlays attaches the VM to a physical datacenter or "provider" VLAN by way of the [localnet-1924-dhcp](components/localnet-1924-dhcp/) component.
+
+2️⃣ A second overlay `l2` sets up a layer2 overlay network as the primary UDN for the namespace by way of the [l2-infra](components/l2-infra/) component.
 
 ### LDAP Server VM
 
@@ -37,11 +43,15 @@ Users are created in `/exports/home` via [the cloud-init](nfs/base/scripts/userD
 
 User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from ldap will automount at `/home/<user>`.
 
-# Run Autofs in a Pod
+====
+
+# Running Autofs in a Pod
 
 Automounting filesystems on OpenShift nodes.
 
 See [automount/](automount/). This was not entirely successful, so attention moved to running autofs directly in the Node OS.
+
+====
 
 # Run Autofs in the Node OS
 
