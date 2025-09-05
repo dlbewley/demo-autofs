@@ -1,0 +1,23 @@
+---
+# https://ovn-kubernetes.io/api-reference/userdefinednetwork-api-spec/#clusteruserdefinednetworkspec
+# can only be created by cluster-admin
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: infra
+spec:
+  # what namespaces should have access to this network
+  namespaceSelector:
+    matchLabels:
+      l2-overlay: "infra"
+  network:
+    topology: Layer2
+    layer2:
+      role: Secondary
+      ipam:
+        mode: Enabled
+        lifecycle: Persistent
+      subnets:
+        - "10.168.4.0/24"
+      excludeSubnets:
+        - "10.168.4.0/26"
