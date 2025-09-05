@@ -13,7 +13,7 @@ spec:
   network:
     topology: Layer2
     layer2:
-      role: Secondary
+      role: Primary
       ipam:
         mode: Enabled
         lifecycle: Persistent
