@@ -7,7 +7,7 @@
 > * Using cloud-init userData to fully configure VM operating systems
 > * Using ArogCD for GitOps management of VMs and networking
 > * Using _localnet_ and _layer2_  User Defined Network topologies
-> * Attaching OpenShift Virtual Machines and datacenter VLANs
+> * Attaching OpenShift Virtual Machines to datacenter VLANs
 > * Using Network Policies to apply VM level firewalling
 
 ## Deploying Example Autofs Infrastructure to VMs
@@ -23,7 +23,20 @@ This demo sets up 3 VMs on OpenShift Virtualization.
 > [!IMPORTANT]
 > Update the organization ID and activation key in the `*/base/scripts/userData` files to valid values before deploying.  See [argo-apps dir](argo-apps/readme.md) for more information including the use of External Secrets Operator.
 
-### Networking Options
+### Network Configuration
+
+The [networking configuraiton](networking/) defines some basic setup in its base via components to [enable network management](components/argocd-net-management) by ArgoCD and setup a bridge mapping for use with localnets.
+
+> [!WARNING]
+> Currently it is assumed that a bridge named `br-vmdata` exists for carrying VM traffic.
+> TODO: Make this support br-ex by default and br-vmdata by overlay.
+
+Deployment uses the [homelab overlay](networking/overlays/homelab/kustomization.yaml) which includes settings specific to the deployed environment. Eg. node selectors and [selection of VLAN id](components/localnet-1924-dhcp).
+
+> [!IMPORTANT]
+> Create a networking overlay for your lab and update the [networking application](ago-apps/networking/application.yaml) to use it before continuing.
+
+#### Networking Options
 
 Each VM has Kustomize Overlays to allow for the use of different network connectivity options.
 
@@ -55,6 +68,9 @@ User `cloud-user` has been relocated to `/local/home/cloud-user`. Users from lda
 
 
 # Other Use Cases
+
+> [!NOTE]
+> The above VM infrastructure may be used to facilitate testing of the following use cases.
 
 ## Running Autofs in a Pod
 
