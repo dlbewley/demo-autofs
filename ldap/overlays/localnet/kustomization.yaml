@@ -11,6 +11,14 @@ components:
 
 patches:
   - target:
+      kind: Namespace
+      name: .*
+    patch: |-
+      - op: add
+        path: /metadata/labels
+        value: { localnet: "1924" }
+
+  - target:
       group: kubevirt.io
       kind: VirtualMachine
       name: .*
