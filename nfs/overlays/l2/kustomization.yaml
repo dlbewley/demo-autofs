@@ -15,7 +15,7 @@ patches:
     patch: |-
       - op: add
         path: /metadata/labels
-        value: { l2-overlay: "infra" }
+        value: { l2-overlay: "infra", k8s.ovn.org/primary-user-defined-network: ""}
 
   - target:
       group: kubevirt.io
@@ -26,15 +26,7 @@ patches:
       - op: replace
         path: /spec/template/spec/domain/devices/interfaces/0
         value: {
-          "name": "nic-infra",
-          "bridge": {},
+          "name": "default",
+          "binding": {"name": "l2bridge"},
           "model": "virtio"
-        }
-      - op: replace
-        path: /spec/template/spec/networks/0
-        value: {
-          "name": "nic-infra",
-          "multus": {
-            "networkName": "infra"
-          }
         }

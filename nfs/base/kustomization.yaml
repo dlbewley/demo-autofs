@@ -50,22 +50,6 @@ patches:
       version: v1
     patch: |-
       - op: replace
-        path: /spec/template/spec/domain/devices/interfaces/0
-        value: {
-          "name": "nic-1924",
-          "bridge": {},
-          "model": "virtio"
-        }
-      - op: replace
-        path: /spec/template/spec/networks/0
-        value: {
-          "name": "nic-1924",
-          "multus": {
-            "networkName": "localnet-1924-dhcp"
-          }
-        }
-
-      - op: replace
         path: /spec/runStrategy
         value: Always
 

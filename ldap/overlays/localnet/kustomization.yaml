@@ -2,21 +2,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-components:
-  - ../../../components/l2-infra
-
 resources:
   - ../../base
 
-patches:
-  - target:
-      kind: Namespace
-      name: .*
-    patch: |-
-      - op: add
-        path: /metadata/labels
-        value: { l2-overlay: "infra", k8s.ovn.org/primary-user-defined-network: ""}
+components:
+  - ../../../components/localnet-1924
 
+patches:
   - target:
       group: kubevirt.io
       kind: VirtualMachine
@@ -26,7 +18,15 @@ patches:
       - op: replace
         path: /spec/template/spec/domain/devices/interfaces/0
         value: {
-          "name": "default",
-          "binding": {"name": "l2bridge"},
+          "name": "nic-1924",
+          "bridge": {},
           "model": "virtio"
+        }
+      - op: replace
+        path: /spec/template/spec/networks/0
+        value: {
+          "name": "nic-1924",
+          "multus": {
+            "networkName": "localnet-1924-dhcp"
+          }
         }
