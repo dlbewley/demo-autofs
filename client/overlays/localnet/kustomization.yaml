@@ -5,9 +5,6 @@ kind: Kustomization
 resources:
   - ../../base
 
-components:
-  - ../../../components/localnet-1924
-
 patches:
   - target:
       kind: Namespace

@@ -6,9 +6,6 @@ resources:
   - ../../base
   - multinetworkpolicy.yaml
 
-components:
-  - ../../../components/localnet-1924
-
 patches:
   - target:
       kind: Namespace
