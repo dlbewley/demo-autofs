@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - application.yaml
+  - ../../components/argocd-app-management
   - ../networking/
   - ../ldap/
   - ../nfs/
