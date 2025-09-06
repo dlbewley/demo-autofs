@@ -5,8 +5,55 @@ apiVersion: k8s.cni.cncf.io/v1beta1
 kind: MultiNetworkPolicy
 metadata:
   annotations:
-    k8s.v1.cni.cncf.io/policy-for: default/vlan-1924
-  name: demo-ldap-ingress
+    # policy only applies to THIS network attachment
+    k8s.v1.cni.cncf.io/policy-for: localnet-1924
+  name: demo-ldap-ingress-localnet-1924
+  namespace: demo-ldap
+spec:
+  podSelector: {}
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    # allow from all to dhcpclient
+    - from:
+      ports:
+        - port: 67
+          protocol: UDP
+        - port: 68
+          protocol: UDP
+
+    # allow from wifi and lab network to ldap service
+    - from:
+        - ipBlock:
+            cidr: 192.168.3.0/24
+            except: []
+        - ipBlock:
+            cidr: 192.168.4.0/24
+            except: []
+      ports:
+        - port: 389
+          protocol: TCP
+        - port: 636
+          protocol: TCP
+
+    # allow from wifi network to ssh service
+    - from:
+        - ipBlock:
+            cidr: 192.168.3.0/24
+            except: []
+      ports:
+        - port: 22
+          protocol: TCP
+---
+apiVersion: k8s.cni.cncf.io/v1beta1
+kind: MultiNetworkPolicy
+metadata:
+  annotations:
+    # policy only applies to THIS network attachment
+    k8s.v1.cni.cncf.io/policy-for: localnet-1924-dhcp
+  name: demo-ldap-ingress-localnet-1924-dhcp
   namespace: demo-ldap
 spec:
   podSelector: {}
