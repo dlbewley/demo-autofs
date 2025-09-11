@@ -16,10 +16,34 @@ op item create \
     "[file]=${vm}/base/scripts/userData"
 ```
 
-* Deploy the VM
+## Network Overlays
 
+This client supports two network overlay configurations:
+
+### Localnet Overlay (`overlays/localnet`)
+- **Purpose**: Uses localnet VLAN 1924 with DHCP
+- **Network**: Connects to `localnet-1924-dhcp` network
+- **Use Case**: When the client needs to be on the lab network (192.168.4.0/24) with other cluster and datacenter based workloads
+
+### L2 Overlay (`overlays/l2`) WIP
+- **Purpose**: Uses L2 primary UDN overlay network for infrastructure connectivity
+- **Network**: Connects to the `infra` L2 P-UDN overlay network
+
+## Deployment Options
+
+* Deploy with base configuration (no network overlay):
 ```bash
-oc apply -k client/base
-# or
+oc apply -k client/overlays/localnet
+```
+
+* Deploy with L2 overlay:
+```bash
+# WIP do not use
+oc apply -k client/overlays/l2
+```
+
+* Deploy with localnet overlay:
+```bash
+oc apply -k client/overlays/localnet
 oc apply -k argo-apps/client
 ```
