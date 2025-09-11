@@ -20,12 +20,12 @@ op item create \
 
 This NFS server supports two network overlay configurations:
 
-### Localnet Overlay (`overlays/localnet`)
+### Localnet Overlay ([overlays/localnet](overlays/localnet))
 - **Purpose**: Uses localnet VLAN 1924 with DHCP
 - **Network**: Connects to `localnet-1924-dhcp` network
 - **Use Case**: When the NFS server needs to be on the lab network (192.168.4.0/24) with other cluster and datacenter based workloads
 
-### L2 Overlay (`overlays/l2`)
+### L2 Overlay ([overlays/l2](overlays/l2)) WIP
 - **Purpose**: Uses L2 primary UDN overlay network for infrastructure connectivity
 - **Network**: Connects to the `infra` L2 P-UDN overlay network
 
