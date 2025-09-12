@@ -19,6 +19,10 @@ oc apply -k argo-apps/networking
 > [!IMPORTANT]
 > Namespaces associated with a Primary UDN or a Cluster UDN will fail to delete so long as they are in scope of the UDN. That means you need to unlable the namespace or alter the UDN to successfully delete the namespace. eg `oc label namespace demo-client localnet-`. https://issues.redhat.com/browse/OCPBUGS-61463
 
+## Logical Network Definition
+
+The `ClusterUserDefinedNetwork` [localnet-1924](../localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "physnet-br-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../physnet-mapping/nncp.yaml)  which defines an OVS bridge mapping.
+
 ```mermaid
 graph LR;
     subgraph Cluster["Cluster Scoped"]
@@ -100,6 +104,10 @@ graph LR;
     class ns-nfs,ns-client,ns-ldap namespace;
 ```
 
+## VM Connectivity
+
+The UDN Controller will ensure that any namespace identified by the CUDN selector has a `NetworkAttachmentDefinition` created within it. This NAD will be used to create a port on the vswitch for the virtual machine NICs to attach to.
+
 ```mermaid
 graph LR;
     Internet["☁️ "]:::Internet
@@ -154,8 +162,8 @@ graph LR;
     classDef networks fill:#cdd,stroke-width:0px
 
     style Localnets stroke-width:0px;
-    style Physical color:#ccc,fill:#222,stroke:#333,stroke-width:3px
-    style Virtual color:#ddd,fill:#333,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
+    style Physical color:#000,fill:#fff,stroke:#333,stroke-width:3px;
+    style Virtual color:#000,fill:#fff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     style Internet fill:none,stroke-width:0px,font-size:+2em;
 
     classDef servers stroke-width:3px,stroke-dasharray: 5 5;
