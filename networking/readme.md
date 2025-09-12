@@ -21,7 +21,7 @@ oc apply -k argo-apps/networking
 
 ## Logical Network Definition
 
-The `ClusterUserDefinedNetwork` [localnet-1924](../localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "physnet-br-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../physnet-mapping/nncp.yaml)  which defines an OVS bridge mapping.
+The `ClusterUserDefinedNetwork` [localnet-1924](../components/localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "physnet-br-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../components/physnet-mapping/nncp.yaml)  which defines an [OVS bridge mapping](https://gist.github.com/dlbewley/9a846ac0ebbdce647af0a8fb2b47f9d0).
 
 ```mermaid
 graph LR;
@@ -131,11 +131,7 @@ graph LR;
       node3-eth0 ==> vlan-1924;
     end
 
-    subgraph Virtual["Virtual"]
-      subgraph Localnets["Localnet NADs"]
-          nad-1924[🛜 localnet-1924]:::nad-1924;
-      end
-
+    subgraph Virtual["Virtual Machines"]
       subgraph NFS-Server["🗄️ NFS Server"]
           server-1-eth0[eth0 🔌]:::vm-eth;
       end
@@ -148,6 +144,10 @@ graph LR;
           server-3-eth0[eth0 🔌]:::vm-eth;
       end
     end
+      subgraph Localnets["Localnet NADs"]
+          nad-1924[🛜 localnet-1924]:::nad-1924;
+      end
+
 
     server-1-eth0 -.-> nad-1924
     server-2-eth0 -.-> nad-1924
@@ -166,10 +166,11 @@ graph LR;
     style Virtual color:#000,fill:#fff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     style Internet fill:none,stroke-width:0px,font-size:+2em;
 
+    classDef nodes color:#fff,fill:#005577,stroke:#000,stroke-width:2px;
+    class node1,node2,node3 nodes
+
     classDef servers stroke-width:3px,stroke-dasharray: 5 5;
     class NFS-Server,LDAP-Server,Client servers
 
-    classDef nodes stroke-width:3px
-    class node1,node2,node3 nodes
 
 ```
