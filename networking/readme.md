@@ -26,11 +26,11 @@ The `ClusterUserDefinedNetwork` [localnet-1924](../components/localnet-1924/clus
 ```mermaid
 graph LR;
     subgraph Cluster["Cluster Scoped"]
-      udn-localnet-1924["CUDN<br> 📃 localnet-1924"]:::udn-localnet-1924
+      udn-localnet-1924["CUDN<br>️ 📄 localnet-1924"]:::udn-localnet-1924
       udn-controller[/"⚙️ UDN Controller"/]
 
       subgraph Localnets["Physnet Mappings"]
-        physnet[Localnet<br> 🛜 physnet-br-vmdata]:::nad-1924;
+        physnet[Localnet<br> 🧭 physnet-br-vmdata]:::nad-1924;
       end
 
       subgraph Project["Project Scoped"]
@@ -49,17 +49,15 @@ graph LR;
           nad-1924-client[NAD<br> 🛜 localnet-1924]:::nad-1924;
         end
       end
-    end
-
-    subgraph Physical["Physical Network"]
       subgraph node1["🖥️ Node "]
-        br-vmdata[ OVS Bridge<br> 🛜 br-vmdata]:::vlan-1924;
+        br-vmdata[ OVS Bridge<br> 🔗 br-vmdata]:::vlan-1924;
       end
     end
 
-    udn-localnet-1924 -. selects ..-> ns-client
-    udn-localnet-1924 -. selects ..-> ns-ldap
-    udn-localnet-1924 -. selects ..-> ns-nfs
+
+    udn-localnet-1924 -. selects .-> ns-client
+    udn-localnet-1924 -. selects .-> ns-ldap
+    udn-localnet-1924 -. selects .-> ns-nfs
 
 
     linkStyle 0,1,2 stroke:#007799
@@ -91,16 +89,15 @@ graph LR;
     classDef networks fill:#cdd,stroke-width:0px;
 
     style udn-controller fill:#fff,stroke:#000,stroke-width:1px;
-    style node1 fill:#fff,stroke:#000,stroke-width:1px;
+    style node1 fill:#fff,stroke:#000,stroke-width:3px;
     style Localnets fill:#fff,stroke:#000,stroke-width:1px;
     style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:3px;
-    style Physical color:#000,fill:#fff,stroke:#333,stroke-width:3px;
     style Project color:#000,fill:#dff,stroke:#333,stroke-width:0px
     style Internet fill:none,stroke-width:0px,font-size:+2em;
 
     classDef nodes stroke-width:3px;
     class node1,node2,node3 nodes;
-    classDef namespace color:#fff,fill:#005577,stroke:#000,stroke-width:2px;
+    classDef namespace color:#000,fill:#fff,stroke:#000,stroke-width:2px;
     class ns-nfs,ns-client,ns-ldap namespace;
 ```
 
@@ -110,67 +107,80 @@ The UDN Controller will ensure that any namespace identified by the CUDN selecto
 
 ```mermaid
 graph LR;
+    subgraph Cluster[" "]
+
+      subgraph Project[" "]
+        subgraph ns-nfs["🗄️ NFS Namespace"]
+          label-nfs("🏷️ localnet=1924")
+          nad-1924-nfs[NAD<br> 🛜 localnet-1924]
+          subgraph vm-nfs["🗄️ NFS Server"]
+              nfs-eth0[eth0 🔌]
+          end
+        end
+
+        subgraph ns-ldap["🔎 LDAP Namespace"]
+          label-ldap("🏷️ localnet=1924")
+          nad-1924-ldap[NAD<br> 🛜 localnet-1924]
+          subgraph vm-ldap["🔎 LDAP Server"]
+              ldap-eth0[eth0 🔌]
+          end
+        end
+
+        subgraph ns-client["💻 Client Namespace"]
+          label-client("🏷️ localnet=1924")
+          nad-1924-client[NAD<br> 🛜 localnet-1924]
+          subgraph vm-client["💻 Client"]
+              client-eth0[eth0 🔌]
+          end
+        end
+
+      end
+
+      subgraph node1["🖥️ Node "]
+        br-vmdata[ OVS Bridge<br> 🔗 br-vmdata]:::vlan-1924;
+      end
+    end
+
+    nfs-eth0    ---> nad-1924-nfs
+    ldap-eth0   ---> nad-1924-ldap
+    client-eth0 ---> nad-1924-client
+
+
+    nad-1924-client --> br-vmdata
+    nad-1924-ldap --> br-vmdata
+    nad-1924-nfs --> br-vmdata
+
+
+    linkStyle 0,1,2,3,4,5 stroke:#00dddd,stroke-width:2px;
+
     Internet["☁️ "]:::Internet
-    vlan-1924[🛜 VLAN 1924<br>192.168.4.0/24<br>]:::vlan-1924;
-    vlan-1924 ==> Internet
-    nad-1924 <---> vlan-1924
+    br-vmdata ==> Internet
 
-    subgraph Physical["Physical"]
-      subgraph node1["🖥️ Node 1"]
-        node1-eth0[eth0 🔌]:::node-eth;
-      end
-      subgraph node2["🖥️ Node 2"]
-        node2-eth0[eth0 🔌]:::node-eth;
-      end
-      subgraph node3["🖥️ Node 3"]
-        node3-eth0[eth0 🔌]:::node-eth;
-      end
-
-      node1-eth0 ==> vlan-1924
-      node2-eth0 ==> vlan-1924;
-      node3-eth0 ==> vlan-1924;
-    end
-
-    subgraph Virtual["Virtual Machines"]
-      subgraph NFS-Server["🗄️ NFS Server"]
-          server-1-eth0[eth0 🔌]:::vm-eth;
-      end
-
-      subgraph LDAP-Server["🔎 LDAP Server"]
-          server-2-eth0[eth0 🔌]:::vm-eth;
-      end
-
-      subgraph Client["💻 Client"]
-          server-3-eth0[eth0 🔌]:::vm-eth;
-      end
-    end
-      subgraph Localnets["Localnet NADs"]
-          nad-1924[🛜 localnet-1924]:::nad-1924;
-      end
-
-
-    server-1-eth0 -.-> nad-1924
-    server-2-eth0 -.-> nad-1924
-    server-3-eth0 -.-> nad-1924
 
     classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px;
+    class node1-eth0 node-eth;
+
     classDef vm-eth fill:#00ffff,color:#00f,stroke:#444,stroke-width:2px,stroke-dasharray: 1 1;
+    class client-eth0,ldap-eth0,nfs-eth0 vm-eth;
 
     classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px;
-    classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
 
-    classDef networks fill:#cdd,stroke-width:0px
+    classDef labels stroke-width:1px,color:#fff,fill:#005577;
+    class label-client,label-ldap,label-nfs labels;
 
-    style Localnets stroke-width:0px;
-    style Physical color:#000,fill:#fff,stroke:#333,stroke-width:3px;
-    style Virtual color:#000,fill:#fff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
+    style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:3px;
+    style Project color:#000,fill:#dff,stroke:#333,stroke-width:0px;
     style Internet fill:none,stroke-width:0px,font-size:+2em;
 
-    classDef nodes color:#fff,fill:#005577,stroke:#000,stroke-width:2px;
-    class node1,node2,node3 nodes
+    classDef vm color:#000,fill:#eee,stroke:#000,stroke-width:2px
+    class vm-client,vm-ldap,vm-nfs vm
 
-    classDef servers stroke-width:3px,stroke-dasharray: 5 5;
-    class NFS-Server,LDAP-Server,Client servers
+    classDef nodes fill:#fff,stroke:#000,stroke-width:3px;
+    class node1 nodes;
 
+    classDef namespace color:#000,fill:#fff,stroke:#000,stroke-width:2px;
+    class ns-nfs,ns-client,ns-ldap namespace;
 
+    classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px;
+    class nad-1924-client,nad-1924-ldap,nad-1924-nfs nad-1924;
 ```
