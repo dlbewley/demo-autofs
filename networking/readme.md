@@ -1,7 +1,7 @@
 # ClusterUserDefinedNetwork Configuration for Autofs Demonstration
 
 
-This will deploy to a CUDN of `localnet` topology on VLAN 1924 which will be accessed via the physical network `physnet-br-vmdata` on the worker nodes. These items are referenced via reusable [components](../components/).
+This will deploy to a CUDN of `localnet` topology on VLAN 1924. This segment will be accessed via the physical network `physnet-br-vmdata` associated with an OVS bridge on the worker nodes. These items are referenced via reusable [components](../components/).
 
 * Create an appropriate [overlay](overlays/homelab/kustomization.yaml) for the network.
 
@@ -34,17 +34,17 @@ graph LR;
       end
 
       subgraph Project["Project Scoped"]
-        subgraph ns-nfs["🗄️ NFS Namespace"]
+        subgraph ns-nfs["🗄️ **demo-nfs** Namespace"]
           label-nfs("🏷️ localnet=1924"):::labels;
-          nad-1924-nfs[NAD<br> 🛜 localnet-1924]:::nad-1924;
+          nad-1924-nfs[NAD<br> 🛜 localnet-1924];
         end
 
-        subgraph ns-ldap["🔎 LDAP Namespace"]
+        subgraph ns-ldap["🔎 **demo-ldap** Namespace"]
           label-ldap("🏷️ localnet=1924"):::labels;
           nad-1924-ldap[NAD<br> 🛜 localnet-1924]:::nad-1924;
         end
 
-        subgraph ns-client["💻 Client Namespace"]
+        subgraph ns-client["💻 **demo-client** Namespace"]
           label-client("🏷️ localnet=1924"):::labels;
           nad-1924-client[NAD<br> 🛜 localnet-1924]:::nad-1924;
         end
@@ -60,7 +60,7 @@ graph LR;
     udn-localnet-1924 -. selects .-> ns-nfs
 
 
-    linkStyle 0,1,2 stroke:#007799
+    linkStyle 0,1,2 stroke:#007799,stroke-width:2px;
 
     udn-controller --creates--> nad-1924-nfs
     udn-controller --creates--> nad-1924-ldap
@@ -82,7 +82,6 @@ graph LR;
     classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px;
 
     classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px;
-    classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
     classDef udn-localnet-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:2px;
 
     classDef labels stroke-width:1px,color:#fff,fill:#005577;
@@ -91,7 +90,7 @@ graph LR;
     style udn-controller fill:#fff,stroke:#000,stroke-width:1px;
     style node1 fill:#fff,stroke:#000,stroke-width:3px;
     style Localnets fill:#fff,stroke:#000,stroke-width:1px;
-    style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:3px;
+    style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:0px;
     style Project color:#000,fill:#dff,stroke:#333,stroke-width:0px
     style Internet fill:none,stroke-width:0px,font-size:+2em;
 
@@ -99,6 +98,9 @@ graph LR;
     class node1,node2,node3 nodes;
     classDef namespace color:#000,fill:#fff,stroke:#000,stroke-width:2px;
     class ns-nfs,ns-client,ns-ldap namespace;
+
+    classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px;
+    class nad-1924-client,nad-1924-ldap,nad-1924-nfs nad-1924;
 ```
 
 ## VM Connectivity
