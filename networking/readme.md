@@ -42,7 +42,7 @@ graph LR;
         br-ex[ OVS Bridge<br> 🔗 br-ex]
         br-vmdata[ OVS Bridge<br> 🔗 br-vmdata]
         node1-bond0[bond0 🔌]
-        node1-vlan-machine[bond0.123 🔌]
+        node1-vlan-machine[VLAN Int<br> bond0.123 🔌]
       end
     end
 
