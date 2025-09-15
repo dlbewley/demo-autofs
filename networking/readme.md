@@ -148,17 +148,17 @@ graph LR;
 
       subgraph Project["Project Scoped"]
         subgraph ns-nfs["🗄️ **demo-nfs** Namespace"]
-          label-nfs("🏷️ localnet=1924"):::labels;
+          label-nfs("🏷️ vlan-1924"):::labels;
           nad-1924-nfs[NAD<br> 🛜 localnet-1924];
         end
 
         subgraph ns-ldap["🔎 **demo-ldap** Namespace"]
-          label-ldap("🏷️ localnet=1924"):::labels;
+          label-ldap("🏷️ vlan-1924"):::labels;
           nad-1924-ldap[NAD<br> 🛜 localnet-1924]:::nad-1924;
         end
 
         subgraph ns-client["💻 **demo-client** Namespace"]
-          label-client("🏷️ localnet=1924"):::labels;
+          label-client("🏷️ vlan-1924"):::labels;
           nad-1924-client[NAD<br> 🛜 localnet-1924]:::nad-1924;
         end
       end
@@ -222,7 +222,7 @@ graph LR;
 
       subgraph Project[" "]
         subgraph ns-nfs["🗄️ **demo-nfs** Namespace"]
-          label-nfs("🏷️ localnet=1924")
+          label-nfs("🏷️ vlan-1924")
           nad-1924-nfs[NAD<br> 🛜 localnet-1924]
           subgraph vm-nfs["🗄️ NFS Server"]
               nfs-eth0[eth0 🔌]
@@ -230,7 +230,7 @@ graph LR;
         end
 
         subgraph ns-ldap["🔎 **demo-ldap** Namespace"]
-          label-ldap("🏷️ localnet=1924")
+          label-ldap("🏷️ vlan-1924")
           nad-1924-ldap[NAD<br> 🛜 localnet-1924]
           subgraph vm-ldap["🔎 LDAP Server"]
               ldap-eth0[eth0 🔌]
@@ -238,7 +238,7 @@ graph LR;
         end
 
         subgraph ns-client["💻 **demo-client** Namespace"]
-          label-client("🏷️ localnet=1924")
+          label-client("🏷️ vlan-1924")
           nad-1924-client[NAD<br> 🛜 localnet-1924]
           subgraph vm-client["💻 Client"]
               client-eth0[eth0 🔌]

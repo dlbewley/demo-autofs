@@ -12,7 +12,7 @@ patches:
     patch: |-
       - op: add
         path: /metadata/labels
-        value: { localnet: "1924" }
+        value: { vlan-1924: "" }
 
   - target:
       group: kubevirt.io
