@@ -231,15 +231,15 @@ oc delete -k argo-apps/demo-autofs
 oc delete application.argoproj.io/demo-autofs -n openshift-gitops
 ```
 
-The Cluster User Defined Network controller will prevent the deletion of namespaces assocated with [CUDNs](../components/localnet-1924/clusterdefinednetwork.yaml) through namespace selectors. In this case the label we are using is `localnet=1924`.
+The Cluster User Defined Network controller will prevent the deletion of namespaces assocated with [CUDNs](../components/localnet-1924/clusterdefinednetwork.yaml) through namespace selectors. In this case the label we are using is `vlan-1924=""`.
 
 > [!IMPORTANT]
 > Remove the label from the namespace to allow the deletion to proceed.
 >
 > ```bash
-> oc label namespace demo-client localnet-
-> oc label namespace demo-ldap localnet-
-> oc label namespace demo-nfs localnet-
+> oc label namespace demo-client vlan-1924-
+> oc label namespace demo-ldap vlan-1924-
+> oc label namespace demo-nfs vlan-1924-
 > ```
 
 > [!IMPORTANT]
