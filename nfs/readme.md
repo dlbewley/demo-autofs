@@ -13,7 +13,7 @@ op item create \
     --title "demo autofs $vm" \
     --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
     --tags demo=autofs \
-    "[file]=${vm}/base/scripts/userData"
+    "userData[file]=${vm}/base/scripts/userData"
 ```
 
 ## Network Overlays

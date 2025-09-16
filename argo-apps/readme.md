@@ -174,9 +174,23 @@ for vm in client ldap nfs; do
     --title "demo autofs $vm" \
     --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
     --tags demo=autofs \
-    "[file]=${vm}/base/scripts/userData"
+    "userData[file]=${vm}/base/scripts/userData"
 done
 ```
+
+* Update data in 1Password
+
+```bash
+vault=eso
+for vm in client; do
+  op item edit \
+    --vault "$vault" \
+    --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
+    "demo autofs $vm" \
+    "userData[file]=${vm}/base/scripts/userData"
+done
+```
+
 
 Here is a view of the 1Password vault.
 
