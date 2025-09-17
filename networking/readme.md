@@ -1,7 +1,7 @@
 # ClusterUserDefinedNetwork Configuration for Autofs Demonstration
 
 
-This will deploy to a CUDN of `localnet` topology on VLAN 1924. This segment will be accessed via the physical network `physnet-br-vmdata` associated with an OVS bridge on the worker nodes. These items are referenced via reusable [components](../components/).
+This will deploy to a CUDN of `localnet` topology on VLAN 1924. This segment will be accessed via the physical network `pysnet-vmdata` associated with an OVS bridge on the worker nodes. These items are referenced via reusable [components](../components/).
 
 * Create an appropriate [overlay](overlays/homelab/kustomization.yaml) for the network.
 
@@ -35,7 +35,8 @@ graph LR;
     subgraph Cluster[" "]
 
       subgraph Localnets["Physnet Mappings"]
-        physnet-vmdata[Localnet<br> 🧭 physnet-br-vmdata]
+        physnet-ex[Localnet<br> 🧭 physnet]
+        physnet-vmdata[Localnet<br> 🧭 pysnet-vmdata]
       end
 
       subgraph node1["🖥️ Node "]
@@ -46,6 +47,7 @@ graph LR;
       end
     end
 
+    physnet-ex -- maps to --> br-ex
     physnet-vmdata -- maps to --> br-vmdata
     br-ex --> node1-vlan-machine --> node1-bond0
     br-vmdata --> node1-bond0
@@ -56,7 +58,7 @@ graph LR;
     classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
 
     classDef vlan-default fill:#00aadd,color:#00f,stroke:#333,stroke-width:2px
-    class br-ex,node1-vlan-machine,node1-bond0 vlan-default
+    class br-ex,physnet-ex,node1-vlan-machine,node1-bond0 vlan-default
 
     classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
     class node1-vlan1924,br-vmdata,physnet-vmdata vlan-1924
@@ -88,7 +90,8 @@ graph LR;
     subgraph Cluster[" "]
 
       subgraph Localnets["Physnet Mappings"]
-        physnet-vmdata[Localnet<br> 🧭 physnet-br-vmdata]
+        physnet-ex[Localnet<br> 🧭 physnet]
+        physnet-vmdata[Localnet<br> 🧭 pysnet-vmdata]
       end
 
       subgraph node1["🖥️ Node "]
@@ -99,6 +102,7 @@ graph LR;
       end
     end
 
+    physnet-ex -- maps to --> br-ex
     physnet-vmdata -- maps to --> br-vmdata
     br-ex --> node1-bond0
     br-vmdata --> node1-bond1
@@ -110,7 +114,7 @@ graph LR;
     classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
 
     classDef vlan-default fill:#00aadd,color:#00f,stroke:#333,stroke-width:2px
-    class br-ex,node1-bond0 vlan-default
+    class br-ex,physnet-ex,node1-bond0 vlan-default
 
     classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
     class br-vmdata,physnet-vmdata vlan-1924
@@ -134,7 +138,7 @@ graph LR;
 
 ## Logical Network Definition
 
-The `ClusterUserDefinedNetwork` [localnet-1924](../components/localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "physnet-br-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../components/physnet-mapping/nncp.yaml)  which defines an [OVS bridge mapping](https://gist.github.com/dlbewley/9a846ac0ebbdce647af0a8fb2b47f9d0).
+The `ClusterUserDefinedNetwork` [localnet-1924](../components/localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "pysnet-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../components/physnet-mapping/nncp.yaml)  which defines an [OVS bridge mapping](https://gist.github.com/dlbewley/9a846ac0ebbdce647af0a8fb2b47f9d0).
 
 ```mermaid
 graph LR;
@@ -143,7 +147,7 @@ graph LR;
       udn-controller[/"⚙️ UDN Controller"/]
 
       subgraph Localnets["Physnet Mappings"]
-        physnet[Localnet<br> 🧭 physnet-br-vmdata]:::nad-1924;
+        physnet[Localnet<br> 🧭 pysnet-vmdata]:::nad-1924;
       end
 
       subgraph Project["Project Scoped"]

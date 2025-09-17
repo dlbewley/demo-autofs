@@ -15,7 +15,7 @@ spec:
     localnet:
       role: Secondary
       # bridge mapping
-      physicalNetworkName: physnet-br-vmdata
+      physicalNetworkName: physnet-vmdata
       vlan:
         mode: Access
         access:

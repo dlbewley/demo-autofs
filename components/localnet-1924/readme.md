@@ -12,7 +12,7 @@ The `localnet-1924` component creates a VLAN 1924 network that bridges virtual a
 - **Topology**: Localnet (bridges virtual and physical networks)
 - **Role**: Secondary (additional network alongside the default cluster network)
 - **VLAN ID**: 1924 (Access mode)
-- **Physical Network**: `physnet-br-vmdata` (bridge mapping)
+- **Physical Network**: `physnet-vmdata` (bridge mapping)
 - **Subnet**: `192.168.4.0/24` (254 total IP addresses)
 - **IPAM**: Static allocation managed by OpenShift OVN-Kubernetes
 
@@ -52,7 +52,7 @@ This VLAN 1924 localnet network is ideal for:
 
 - OpenShift cluster with OVN-Kubernetes CNI
 - Physical network bridge `br-vmdata` configured on worker nodes
-- Physical network mapping `physnet-br-vmdata` configured
+- Physical network mapping `physnet-vmdata` configured
 - Cluster-admin privileges (CUDN creation requires cluster-admin)
 - Proper RBAC permissions for ArgoCD to manage CUDN resources
 
@@ -83,7 +83,7 @@ oc get cudn localnet-1924
 oc get network-attachment-definitions -A
 
 # Verify physical network mapping
-oc get nncp ovs-bridge-mapping-physnet-br-vmdata
+oc get nncp ovs-bridge-mapping-physnet-vmdata
 ```
 
 ## Network Attachment
@@ -105,7 +105,7 @@ spec:
 ### Bridge Configuration
 The physical network requires:
 - Bridge name: `br-vmdata`
-- Physical network name: `physnet-br-vmdata`
+- Physical network name: `physnet-vmdata`
 - VLAN 1924 access configuration
 
 ### Worker Node Setup
@@ -158,7 +158,7 @@ oc exec <pod-name> -- ip addr show
 oc get nodes -o jsonpath='{.items[*].metadata.annotations.k8s\.ovn\.org/node-subnets}'
 
 # Check physical network mapping
-oc describe nncp ovs-bridge-mapping-physnet-br-vmdata
+oc describe nncp ovs-bridge-mapping-physnet-vmdata
 
 # Check bridge configuration on worker nodes
 oc debug node/<worker-node> -- chroot /host ovs-vsctl show
@@ -186,7 +186,7 @@ Physical Network (VLAN 1924)
     ↓
 br-vmdata (OVS Bridge)
     ↓
-physnet-br-vmdata (Physical Network Mapping)
+physnet-vmdata (Physical Network Mapping)
     ↓
 localnet-1924 (CUDN)
     ↓

@@ -27,4 +27,4 @@ The localnet-1924 component defines a ClusterUserDefinedNetwork that configures 
 The localnet-1924-dhcp component also defines a ClusterUserDefinedNetwork for VLAN 1924, but configures it to use external DHCP services provided by the datacenter infrastructure instead of OpenShift's built-in IP allocation. This allows pods in labeled namespaces to obtain IP addresses from the existing datacenter DHCP server. It will be available to namespaces labeled with `localnet: "1924"`.
 
 ### physnet-mapping
-The physnet-mapping component contains NodeNetworkConfigurationPolicy resources that define the physical network bridge mappings for OVN-Kubernetes. It configures the `br-vmdata` bridge mapping to the `physnet-br-vmdata` physical network, enabling OVN to properly route traffic between virtual and physical networks.
+The physnet-mapping component contains NodeNetworkConfigurationPolicy resources that define the physical network bridge mappings for OVN-Kubernetes. It configures the `br-vmdata` bridge mapping to the `physnet-vmdata` physical network, enabling OVN to properly route traffic between virtual and physical networks.
