@@ -25,10 +25,69 @@ Nodes may have a single Network Interface Card or multiple cards bound together 
 
 ### Node Example: 2 NICs, 1 bond
 
-If multiple VLANs are trunked to `bond0`, a VLAN interface would be created at install time for the machine network. An OVS bridge `br-ex` will be attached there to take over the node IP address. At this point, `br-vmdata` could be attached at `bond0` where all VLAN tags will remain visible.
+If multiple VLANs are trunked to `bond0`, a VLAN interface would be created at install time for the machine network or the native VLAN can be used if it exists.
+
+An OVS bridge `br-ex` will be attached to this default interface and it will take over the node IP address.
 
 > [!TIP]
-> This same example also applies to a node with a single NIC.
+> These same examples also apply to a node with a single NIC.
+
+#### Machine Net on Native VLAN
+
+Example with Machine Network on the native VLAN of the trunk feeding bond0.
+
+In the simplest case the node is installed with its IP address directly on the bond0 interface.
+
+```mermaid
+graph LR;
+    subgraph Cluster[" "]
+
+      subgraph Localnets["Physnet Mappings"]
+        physnet-ex[Localnet<br> 🧭 physnet]
+      end
+
+      subgraph node1["🖥️ Node "]
+        br-ex[ OVS Bridge<br> 🔗 br-ex]
+        node1-bond0[bond0 🔌]
+      end
+    end
+
+    physnet-ex -- maps to --> br-ex
+    br-ex --> node1-bond0
+
+    Internet["☁️ "]:::Internet
+    node1-bond0 ==(🏷️ 802.1q trunk)==> Internet
+
+    classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+
+    classDef vlan-default fill:#00aadd,color:#00f,stroke:#333,stroke-width:2px
+    class br-ex,physnet-ex,node1-vlan-machine,node1-bond0 vlan-default
+
+    classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+    class node1-vlan1924,br-vmdata,physnet-vmdata vlan-1924
+
+    classDef labels stroke-width:1px,color:#fff,fill:#005577
+    classDef networks fill:#cdd,stroke-width:0px
+
+    style Localnets fill:#fff,stroke:#000,stroke-width:1px
+    style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:0px
+    style Internet fill:none,stroke-width:0px,font-size:+2em
+
+    classDef nodes fill:#fff,stroke:#000,stroke-width:3px
+    class node1,node2,node3 nodes
+
+    classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+    class node1-bond1 node-eth
+
+    classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px
+    class nad-1924-client,nad-1924-ldap,nad-1924-nfs nad-1924
+```
+
+#### Machine Net on Tagged  VLAN
+
+Example with Machine Network on a tagged VLAN.
+
+If the machine network is using a VLAN interface then no tags will be visibible on br-ex. A second bridge `br-vmdata` should be attached at `bond0` where all VLAN tags will remain visible.
 
 ```mermaid
 graph LR;
