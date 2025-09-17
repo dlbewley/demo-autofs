@@ -25,7 +25,7 @@ Nodes may have a single Network Interface Card or multiple cards bound together 
 
 ### Node Example: 2 NICs, 1 bond
 
-If multiple VLANs are trunked to `bond0`, a VLAN interface would be created at install time for the machine network. An OVS bridge `br-ex` will be attached there to take over the node IP address. At this point, `br-vmdata` could be attached at `bond0` instead.
+If multiple VLANs are trunked to `bond0`, a VLAN interface would be created at install time for the machine network. An OVS bridge `br-ex` will be attached there to take over the node IP address. At this point, `br-vmdata` could be attached at `bond0` where all VLAN tags will remain visible.
 
 > [!TIP]
 > This same example also applies to a node with a single NIC.
