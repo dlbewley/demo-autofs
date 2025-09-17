@@ -1,7 +1,7 @@
 # ClusterUserDefinedNetwork Configuration for Autofs Demonstration
 
 
-This will deploy to a CUDN of `localnet` topology on VLAN 1924. This segment will be accessed via the physical network `pysnet-vmdata` associated with an OVS bridge on the worker nodes. These items are referenced via reusable [components](../components/).
+This will deploy to a CUDN of `localnet` topology on VLAN 1924. This segment will be accessed via the physical network `physnet-vmdata` associated with an OVS bridge on the worker nodes. These items are referenced via reusable [components](../components/).
 
 * Create an appropriate [overlay](overlays/homelab/kustomization.yaml) for the network.
 
@@ -36,7 +36,7 @@ graph LR;
 
       subgraph Localnets["Physnet Mappings"]
         physnet-ex[Localnet<br> 🧭 physnet]
-        physnet-vmdata[Localnet<br> 🧭 pysnet-vmdata]
+        physnet-vmdata[Localnet<br> 🧭 physnet-vmdata]
       end
 
       subgraph node1["🖥️ Node "]
@@ -91,7 +91,7 @@ graph LR;
 
       subgraph Localnets["Physnet Mappings"]
         physnet-ex[Localnet<br> 🧭 physnet]
-        physnet-vmdata[Localnet<br> 🧭 pysnet-vmdata]
+        physnet-vmdata[Localnet<br> 🧭 physnet-vmdata]
       end
 
       subgraph node1["🖥️ Node "]
@@ -138,7 +138,7 @@ graph LR;
 
 ## Logical Network Definition
 
-The `ClusterUserDefinedNetwork` [localnet-1924](../components/localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "pysnet-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../components/physnet-mapping/nncp.yaml)  which defines an [OVS bridge mapping](https://gist.github.com/dlbewley/9a846ac0ebbdce647af0a8fb2b47f9d0).
+The `ClusterUserDefinedNetwork` [localnet-1924](../components/localnet-1924/clusteruserdefinednetwork.yaml) references `physicalNetworkName` "physnet-vmdata" which is associated with the bridge "br-vmdata" by [this NNCP](../components/physnet-mapping/nncp.yaml)  which defines an [OVS bridge mapping](https://gist.github.com/dlbewley/9a846ac0ebbdce647af0a8fb2b47f9d0).
 
 ```mermaid
 graph LR;
@@ -147,7 +147,7 @@ graph LR;
       udn-controller[/"⚙️ UDN Controller"/]
 
       subgraph Localnets["Physnet Mappings"]
-        physnet[Localnet<br> 🧭 pysnet-vmdata]:::nad-1924;
+        physnet[Localnet<br> 🧭 physnet-vmdata]:::nad-1924;
       end
 
       subgraph Project["Project Scoped"]
