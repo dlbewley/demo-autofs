@@ -1,0 +1,17 @@
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: machine-net
+spec:
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: default
+  network:
+    topology: Localnet
+    localnet:
+      role: Secondary
+      physicalNetworkName: physnet
+      mtu: 1500
+      # use DHCP from the datacenter
+      ipam:
+        mode: Disabled

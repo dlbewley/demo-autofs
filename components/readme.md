@@ -7,6 +7,7 @@ This directory contains the following reusable Kustomize components:
 * [automount-role](automount-role/) - RBAC permissions for automount operations including privileged SCC access
 * [localnet-1924](localnet-1924/) - VLAN 1924 network configuration with static IP allocation provided by OpenShift OVN
 * [localnet-1924-dhcp](localnet-1924-dhcp/) - VLAN 1924 network configuration with DHCP provided by the datacenter
+* [machine-net](machine-net/) - Network configuration for atachment to node machine network with DHCP
 * [physnet-mapping](physnet-mapping/) - Physical network bridge mapping configuration for OVN-Kubernetes
 
 ## Component Details
@@ -25,6 +26,9 @@ The localnet-1924 component defines a ClusterUserDefinedNetwork that configures 
 
 ### localnet-1924-dhcp
 The localnet-1924-dhcp component also defines a ClusterUserDefinedNetwork for VLAN 1924, but configures it to use external DHCP services provided by the datacenter infrastructure instead of OpenShift's built-in IP allocation. This allows pods in labeled namespaces to obtain IP addresses from the existing datacenter DHCP server. It will be available to namespaces labeled with `localnet: "1924"`.
+
+### machine-net
+The machine-net component defines a ClusterUserDefinedNetwork that configures access to the physical network topology for machine-level networking. It uses a Localnet topology with secondary role, connecting to the `physnet` physical network provided by `br-ex`. IPAM to be provided by the datacenter infrastructure. This network is available to namespaces in the `default` namespace by default, making it usable by all namespaces.⚠️
 
 ### physnet-mapping
 The physnet-mapping component contains NodeNetworkConfigurationPolicy resources that define the physical network bridge mappings for OVN-Kubernetes. It configures the `br-vmdata` bridge mapping to the `physnet-vmdata` physical network, enabling OVN to properly route traffic between virtual and physical networks.
