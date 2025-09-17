@@ -13,7 +13,7 @@ components:
 patches:
   - target:
       kind: NodeNetworkConfigurationPolicy
-      name: ovs-bridge-mapping-physnet-br-vmdata
+      name: ovs-bridge-mapping-physnet-vmdata
     patch: |-
       - op: replace
         path: /spec/nodeSelector

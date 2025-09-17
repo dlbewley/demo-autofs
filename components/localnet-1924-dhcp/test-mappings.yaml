@@ -1,0 +1,91 @@
+---
+apiVersion: nmstate.io/v1
+kind: NodeNetworkConfigurationPolicy
+metadata:
+  name: ovs-bridge-mapping-1926
+spec:
+  desiredState:
+    ovn:
+      bridge-mappings:
+      - localnet: physnet-br-ex
+        bridge: br-ex
+        state: present
+  nodeSelector:
+    node-role.kubernetes.io/worker: ""
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-localnet
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  annotations:
+    description: Lab Network 192.168.6.0/24 V1926 via br-ex
+  name: vlan-1926
+  namespace: test-localnet
+spec:
+  # the name below is the name of a cluster-scoped "network"
+  # this network will be mapped to an appropriate bridge
+  # via NNCP in an OVN bridge-mapping
+  # by default there is already a physnet to br-ex mapping https://gist.github.com/dlbewley/9a846ac0ebbdce647af0a8fb2b47f9d0
+  config: |-
+    {
+      "cniVersion": "0.4.0",
+      "name": "vlan-1926",
+      "type": "ovn-k8s-cni-overlay",
+      "topology": "localnet",
+      "netAttachDefName": "test-localnet/vlan-1926",
+      "physicalNetworkName": "physnet",
+      "vlanID": 1926,
+      "mtu": 1500,
+      "ipam": {}
+    }
+---
+# sh-5.1# ovn-sbctl get chassis $CHASSIS other_config:ovn-bridge-mappings
+# "physnet:br-ex,physnet-vmdata:br-vmdata"
+---
+# https://docs.openshift.com/container-platform/4.16/networking/multiple_networks/attaching-pod.html
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[
+      {
+        "name": "machine-net",
+        "namespace": "default",
+        "ips": [ "192.168.4.222/24" ]
+      }]'
+spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: example-pod
+    image: quay.io/redhat-cop/tool-box
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [ALL]
+    env:
+      - name: GW
+        value: '192.168.4.1'
+      - name: NIC
+        value: 'net1'
+    command:
+      - /bin/bash
+      - -x
+      - -c
+      - |
+        echo "Show IPs"
+        ip -br -c a
+        echo "Show routes"
+        ip -br -c route
+        echo "Ping gw on NAD"
+         ping -c 10 -I $NIC -B $GW
+        echo "Going to sleep"
+        sleep infinity

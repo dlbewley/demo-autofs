@@ -13,7 +13,7 @@ patches:
     patch: |-
       - op: add
         path: /metadata/labels
-        value: { l2-overlay: "infra", k8s.ovn.org/primary-user-defined-network: ""}
+        value: { l2-overlay-infra: "", k8s.ovn.org/primary-user-defined-network: ""}
 
   - target:
       group: kubevirt.io

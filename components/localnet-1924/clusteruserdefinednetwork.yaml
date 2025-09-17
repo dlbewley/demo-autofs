@@ -9,13 +9,13 @@ spec:
   # what namespaces should have access to this network
   namespaceSelector:
     matchLabels:
-      localnet: "1924"
+      vlan-1924: ""
   network:
     topology: Localnet
     localnet:
       role: Secondary
       # bridge mapping
-      physicalNetworkName: physnet-br-vmdata
+      physicalNetworkName: physnet-vmdata
       vlan:
         mode: Access
         access:

@@ -9,7 +9,7 @@ spec:
   # what namespaces should have access to this network
   namespaceSelector:
     matchLabels:
-      l2-overlay: "infra"
+      l2-overlay-infra: ""
   network:
     topology: Layer2
     layer2:
