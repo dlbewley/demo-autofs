@@ -17,7 +17,12 @@ oc apply -k networking/overlays/homelab
 oc apply -k argo-apps/networking
 ```
 > [!IMPORTANT]
-> Namespaces associated with a Primary UDN or a Cluster UDN will fail to delete so long as they are in scope of the UDN. That means you need to unlable the namespace or alter the UDN to successfully delete the namespace. eg `oc label namespace demo-client localnet-`. https://issues.redhat.com/browse/OCPBUGS-61463
+> Namespaces associated with a Primary UDN or a Cluster UDN will fail to delete so long as they are in scope of the UDN.
+> [OCPBUGS-61463](https://issues.redhat.com/browse/OCPBUGS-61463)
+>
+> This means you need to unlabel the namespace or alter the UDN to successfully delete the selected namespaces. Eg.
+>
+> `oc label namespace demo-client vlan-1924-`
 
 ## Physical Network Configuration
 
@@ -194,6 +199,66 @@ graph LR;
     classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px
     class nad-1924-client,nad-1924-ldap,nad-1924-nfs nad-1924
 ```
+### Node Example: 6 NICs, 3 bonds
+
+The first two interfaces are bound into `bond0`. There is only a native VLAN on this bond.
+The second two interfaces are bound into `bond1` which recieve multiple VLAN tags from the switch.
+The last two interfaces are bound into `bond2` which recieve multiple VLAN tags from the switch.
+
+```mermaid
+graph LR;
+    subgraph Cluster[" "]
+
+      subgraph Localnets["Physnet Mappings"]
+        physnet-ex[Localnet<br> 🧭 physnet]
+        physnet-vmdata[Localnet<br> 🧭 physnet-vmdata]
+      end
+
+      subgraph node1["🖥️ Node "]
+        br-ex[ OVS Bridge<br> 🔗 br-ex]
+        br-vmdata[ OVS Bridge<br> 🔗 br-vmdata]
+        br-linux[ Linux Bridge<br> 🔗 br-linux]
+        node1-bond0[bond0 🔌]
+        node1-bond1[bond1 🔌]
+        node1-bond2[bond2 🔌]
+      end
+    end
+
+    physnet-ex -- maps to --> br-ex
+    physnet-vmdata -- maps to --> br-vmdata
+    br-ex --> node1-bond0
+    br-vmdata --> node1-bond1
+    br-linux --> node1-bond2
+
+    Internet["☁️ "]:::Internet
+    node1-bond0 ==default gw==> Internet
+    node1-bond1 ==(🏷️ 802.1q trunk)==> Internet
+    node1-bond2 ==(🏷️ 802.1q trunk)==> Internet
+
+    classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+
+    classDef vlan-default fill:#00aadd,color:#00f,stroke:#333,stroke-width:2px
+    class br-ex,physnet-ex,node1-bond0 vlan-default
+
+    classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+    class br-vmdata,physnet-vmdata vlan-1924
+
+    classDef labels stroke-width:1px,color:#fff,fill:#005577
+    classDef networks fill:#cdd,stroke-width:0px
+
+    style Localnets fill:#fff,stroke:#000,stroke-width:1px
+    style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:0px
+    style Internet fill:none,stroke-width:0px,font-size:+2em
+
+    classDef nodes fill:#fff,stroke:#000,stroke-width:3px
+    class node1,node2,node3 nodes
+
+    classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+    class node1-bond1 node-eth
+
+    classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px
+    class br-linux,node1-bond2,nad-1924-client,nad-1924-ldap,nad-1924-nfs nad-1924
+```
 
 ## Logical Network Definition
 
@@ -357,4 +422,78 @@ graph LR;
 
     classDef nad-1924 fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px;
     class nad-1924-client,nad-1924-ldap,nad-1924-nfs nad-1924;
+```
+
+### VLAN Guest Tagging
+
+Trunking 802.1Q to virtual machines, commonly known as VGT, is not yet supported by OVN and requires Linux Bridge on a dedicate host interface.
+
+```mermaid
+graph LR;
+    subgraph Cluster[" "]
+
+      subgraph Localnets["Physnet Mappings"]
+        physnet-ex[Localnet<br> 🧭 physnet]
+        physnet-vmdata[Localnet<br> 🧭 physnet-vmdata]
+      end
+        subgraph ns-client[" Firewall Namespace"]
+          nad-vgt-client[NAD<br> 🛜 trunk]
+          subgraph vm-client["🔥 Firewall"]
+              vgt-client-eth0[eth0 🔌]
+          end
+        end
+
+      subgraph node1["🖥️ Node "]
+        br-ex[ OVS Bridge<br> 🔗 br-ex]
+        br-vmdata[ OVS Bridge<br> 🔗 br-vmdata]
+        br-linux[ Linux Bridge<br> 🔗 br-linux]
+        node1-bond0[bond0 🔌]
+        node1-bond1[bond1 🔌]
+        node1-bond2[bond2 🔌]
+      end
+    end
+
+    physnet-ex -- maps to --> br-ex
+    physnet-vmdata -- maps to --> br-vmdata
+    br-ex --> node1-bond0
+    br-vmdata --> node1-bond1
+    br-linux --> node1-bond2
+    vgt-client-eth0 <==(🏷️ 802.1q trunk)==> br-linux
+    vgt-client-eth0 -.-> nad-vgt-client
+    nad-vgt-client -.->  br-linux
+
+    Internet["☁️ "]:::Internet
+    node1-bond0 ==default gw==> Internet
+    node1-bond1 ==(🏷️ 802.1q trunk)==> Internet
+    node1-bond2 ==(🏷️ 802.1q trunk)==> Internet
+
+    classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+
+    classDef vlan-default fill:#00aadd,color:#00f,stroke:#333,stroke-width:2px
+    class br-ex,physnet-ex,node1-bond0 vlan-default
+
+    classDef vlan-1924 fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+    class br-vmdata,physnet-vmdata vlan-1924
+
+    classDef labels stroke-width:1px,color:#fff,fill:#005577
+    classDef networks fill:#cdd,stroke-width:0px
+
+    style Localnets fill:#fff,stroke:#000,stroke-width:1px
+    style Cluster color:#000,fill:#fff,stroke:#333,stroke-width:0px
+    style Internet fill:none,stroke-width:0px,font-size:+2em
+
+    classDef nodes fill:#fff,stroke:#000,stroke-width:3px
+    class node1,node2,node3 nodes
+
+    classDef node-eth fill:#00dddd,color:#00f,stroke:#333,stroke-width:2px
+    class node1-bond1 node-eth
+
+    classDef nad-vgt fill:#00ffff,color:#00f,stroke:#333,stroke-width:1px
+    class nad-vgt-client,vgt-client-eth0,node1-bond2,br-linux nad-vgt
+
+    classDef vm color:#000,fill:#eee,stroke:#000,stroke-width:2px
+    class vm-client,vm-ldap,vm-nfs vm
+
+    classDef namespace color:#000,fill:#fff,stroke:#000,stroke-width:2px;
+    class ns-nfs,ns-client,ns-ldap namespace;
 ```
