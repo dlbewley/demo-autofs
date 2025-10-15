@@ -178,11 +178,27 @@ for vm in client ldap nfs; do
 done
 ```
 
+* Download current copy from 1Password
+
+```bash
+vault=eso
+for vm in client ldap nfs; do
+    op read "op://${vault}/demo autofs ${vm}/userData" \
+        --out-file=${vm}/base/scripts/userData
+done
+```
+
+* Update values
+
+```bash
+vi {client,ldap,nfs}/base/scripts/userData
+```
+
 * Update data in 1Password
 
 ```bash
 vault=eso
-for vm in client; do
+for vm in client ldap nfs; do
   op item edit \
     --vault "$vault" \
     --url "https://github.com/dlbewley/demo-autofs/tree/main/${vm}/base/scripts" \
@@ -191,6 +207,11 @@ for vm in client; do
 done
 ```
 
+* Cleanup working directory
+
+```bash
+git checkout -- {client,ldap,nfs}/base/scripts/userData
+```
 
 Here is a view of the 1Password vault.
 
