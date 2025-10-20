@@ -16,3 +16,9 @@ rules:
       - multi-networkpolicies
     verbs:
       - '*'
+  - apiGroups:
+    - ""
+    resources:
+      - secrets
+    verbs:
+      - '*'
