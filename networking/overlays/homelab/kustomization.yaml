@@ -18,5 +18,5 @@ patches:
       - op: replace
         path: /spec/nodeSelector
         value: {
-              "machine.openshift.io/cluster-api-machineset": "hub-v57jl-cnv"
+              "machine.openshift.io/cluster-api-machineset": "hub-4k77l-cnv"
         }
