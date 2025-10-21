@@ -39,6 +39,10 @@ To apply a custom layered image to your cluster by using the on-cluster build pr
 
 # Prerequisites
 
+## OpenShift 4.20
+
+* The `MachineOSConfig` name must match the name of the associated `MachineConfigPool` as of OCP v4.20.
+
 ## OpenShift 4.19
 
 * ✅ Testing on OpenShift 4.19rc2 & 4.19rc4 MachineOSConfig v1 was successful. (Caveat [this bug](https://issues.redhat.com/browse/OCPBUGS-56648))
