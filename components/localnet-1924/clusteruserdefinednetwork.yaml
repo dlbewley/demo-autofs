@@ -20,10 +20,7 @@ spec:
         mode: Access
         access:
           id: 1924
-      subnets:
-        - "192.168.4.0/24"
-      # do not dole out these IPs
-      excludeSubnets:
-        - "192.168.4.0/25"
-        - "192.168.4.128/26"
-        - "192.168.4.240/28"
+#      subnets:
+#        - "192.168.4.0/24"
+      ipam:
+        mode: Disabled
