@@ -42,7 +42,7 @@ Each VM has Kustomize Overlays to allow for the use of different network connect
 
 * 1️⃣ The `localnet` overlay attaches the VM to a physical datacenter or "provider" VLAN by way of the [localnet-1924-dhcp](components/localnet-1924-dhcp/) component.
 
-* 2️⃣ The `l2` overlay sets up a layer2 overlay network as the primary UDN for the namespace by way of the [l2-infra](components/l2-infra/) component.
+* 2️⃣ The `l2` overlay sets up a layer2 overlay network as the primary UDN for the namespace by way of the [l2-infra](components/l2-infra/) component. (WIP, do not use)
 
 ### LDAP Server VM
 
