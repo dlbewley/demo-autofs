@@ -26,6 +26,10 @@ metadata:
 
 ## IP Address Management
 
+> ![WARNING] Do not use this.
+
+CNI IPAM and OVN subnets are not officially supported for localnet networks in CNV, with the primary UDN being the only exception. Localnet IPAM functionality may work in some configurations, but it has limited testing coverage and is not currently supported. For customers requiring localnet IPAM support, please refer to the tracking epic: https://issues.redhat.com/browse/CNV-64523
+
 ### Available IP Ranges
 - **Total Addresses**: 254 (192.168.4.1 - 192.168.4.254)
 - **Available for Allocation**: 190 addresses
