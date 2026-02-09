@@ -14,24 +14,26 @@ DEMO_ROOT=$GIT_ROOT
 #unset zle_bracketed_paste
 clear
 
+cd $DEMO_ROOT
+
 p "# all the things"
 pei tree -L 3 $DEMO_ROOT
 p
 
+p "# 🛜 setup network overlays"
+pei "oc apply -k networking/overlays/homelab"
+p
+
 p "# 🔧 build ldap server 🗄️"
-pei "oc apply -k $DEMO_ROOT/ldap/base"
-pei "virtctl start ldap -n demo-ldap"
+pei "oc apply -k ldap/overlays/localnet"
 p
 
 p "# 🔧 build nfs server 📂"
-pei "oc apply -k $DEMO_ROOT/nfs/base"
-pei "virtctl start nfs -n demo-nfs"
+pei "oc apply -k nfs/overlays/localnet"
 p
 
-
 p "# 🔧 build nfs client 🙋‍♀️"
-pei "oc apply -k $DEMO_ROOT/client/base"
-pei "virtctl start client -n demo-client"
+pei "oc apply -k client/overlays/localnet"
 p
 
 p "# ⌛ wait for the VMs to come up..."
@@ -66,7 +68,15 @@ pei "ssh cloud-user@client.lab.bewley.net"
 p
 
 p "# 🎉 SUCCESS!"
- 
+
 DEMO_COMMENT_COLOR=$BLUE
 p "# 🚿 time to clean up"
+p "oc label namespace demo-client localnet- l2-overlay-"
+p "oc label namespace demo-nfs localnet- l2-overlay-"
+p "oc label namespace demo-ldap localnet- l2-overlay-"
+p "oc delete -k client/overlays/localnet"
+p "oc delete -k nfs/overlays/localnet"
+p "oc delete -k ldap/overlays/localnet"
+p "oc delete -k networking/overlays/homelab"
+
 DEMO_COMMENT_COLOR=$GREEN
